@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer } from "lucide-react";
 import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
 
@@ -9,15 +9,40 @@ export default function Home() {
   const [locationName, setLocationName] = useState<string>("London, UK");
   const [isLoading, setIsLoading] = useState(true);
 
-  const days = [
-    { day: "Mon", date: "12", current: false },
-    { day: "Tue", date: "13", current: true },
-    { day: "Wed", date: "14", current: false },
-    { day: "Thu", date: "15", current: false },
-    { day: "Fri", date: "16", current: false },
-    { day: "Sat", date: "17", current: false },
-    { day: "Sun", date: "18", current: false },
-  ];
+  const [days, setDays] = useState<{ day: string; date: string; current: boolean; fullDate: Date }[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Generate 14 days centered around today
+    const generateDays = () => {
+      const today = new Date();
+      const generated = [];
+
+      for (let i = -6; i <= 7; i++) {
+        const d = new Date();
+        d.setDate(today.getDate() + i);
+        generated.push({
+          day: d.toLocaleDateString("en-US", { weekday: "short" }),
+          date: d.getDate().toString(),
+          current: d.toDateString() === today.toDateString(),
+          fullDate: d
+        });
+      }
+      setDays(generated);
+    };
+
+    generateDays();
+  }, []);
+
+  // Scroll to current day
+  useEffect(() => {
+    if (scrollRef.current && days.length > 0) {
+      const activeElement = scrollRef.current.querySelector('[data-current="true"]');
+      if (activeElement) {
+        activeElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }, [days]);
 
   const schedule = [
     { time: "10:00 AM", title: "Focus Session", description: "Deep work: Design System", color: "bg-primary" },
@@ -115,10 +140,11 @@ export default function Home() {
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Your Week</h2>
           <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">Full View</button>
         </div>
-        <div className="flex justify-between gap-2 overflow-x-auto pb-2 no-scrollbar">
+        <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
           {days.map((d, idx) => (
             <div
               key={idx}
+              data-current={d.current}
               className={`flex-shrink-0 w-12 py-4 rounded-2xl flex flex-col items-center gap-1 transition-premium cursor-pointer ${d.current
                 ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
                 : "bg-white dark:bg-aura-clay/30 text-slate-500 border border-aura-sand/20 hover:border-primary/50"
