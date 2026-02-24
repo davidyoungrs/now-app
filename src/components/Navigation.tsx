@@ -33,13 +33,13 @@ export default function Navigation() {
                         className={cn(
                             "relative flex flex-col items-center justify-center w-14 h-14 rounded-[2rem] transition-premium group",
                             isActive
-                                ? "bg-slate-900 dark:bg-primary text-white dark:text-slate-900 shadow-xl"
-                                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                ? "bg-primary text-white shadow-xl shadow-primary/20 scale-105"
+                                : "text-slate-400 hover:bg-white/50 dark:hover:bg-aura-clay/50"
                         )}
                     >
-                        <Icon size={22} className={cn("transition-premium", isActive ? "scale-110" : "group-hover:scale-110")} />
+                        <Icon size={24} className={cn("transition-premium", isActive ? "scale-110" : "group-hover:scale-110")} />
                         <span className={cn(
-                            "absolute -bottom-8 text-[9px] font-bold uppercase tracking-widest opacity-0 transition-premium",
+                            "absolute -bottom-8 text-[8px] font-bold uppercase tracking-[0.2em] opacity-0 transition-premium text-primary",
                             isActive ? "opacity-100 -bottom-6" : "group-hover:opacity-100 group-hover:-bottom-6"
                         )}>
                             {item.label}

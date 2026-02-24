@@ -1,17 +1,30 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f6f8f6;
-  --foreground: #0f172a;
-  --primary: #5de619;
-  --secondary: #162111;
-  --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  --glass-shadow-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  /* Warm Organic Palette */
+  --aura-cream: #fdfaf5;
+  --aura-clay: #2d2a26;
+  --aura-sage: #8da18a;
+  --aura-moss: #4a5d48;
+  --aura-sand: #e6dfd3;
+  --aura-accent: #d4a373;
+  /* Warm gold/tan */
+
+  --background: var(--aura-cream);
+  --foreground: var(--aura-clay);
+  --primary: var(--aura-moss);
+  --secondary: var(--aura-clay);
+
+  --glass-shadow: 0 10px 40px -10px rgba(74, 93, 72, 0.1);
+  --glass-shadow-dark: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
   --ease-premium: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 @theme {
   --color-primary: var(--primary);
+  --color-accent: var(--aura-accent);
+  --color-sage: var(--aura-sage);
+  --color-cream: var(--aura-cream);
   --color-background-light: var(--background);
   --color-background-dark: var(--secondary);
 }
@@ -21,20 +34,23 @@ body {
   background: var(--background);
   font-family: 'Inter', sans-serif;
   min-height: 100dvh;
+  /* Light organic texture simulation */
+  background-image: radial-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 .glass {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: var(--glass-shadow);
 }
 
 .dark .glass {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(45, 42, 38, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: var(--glass-shadow-dark);
 }
@@ -89,5 +105,10 @@ body {
 }
 
 .transition-premium {
-  transition: all 500ms var(--ease-premium);
+  transition: all 600ms var(--ease-premium);
+}
+
+/* Organic components */
+.card-organic {
+  @apply bg-white dark:bg-aura-clay/50 rounded-[2.5rem] border border-aura-sand/30 dark:border-aura-clay/20 shadow-sm transition-premium;
 }

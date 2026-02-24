@@ -6,8 +6,8 @@ import Navigation from "@/components/Navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Now - Minimal Living Companion",
-  description: "Your daily companion for a minimal and organized life.",
+  title: "Aura - Minimal Living Companion",
+  description: "Aura is your intelligent minimal living companion for time, food, and wardrobe.",
 };
 
 export const viewport = {
