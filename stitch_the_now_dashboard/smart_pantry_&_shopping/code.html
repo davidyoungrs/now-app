@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Minimal Living Companion - Smart Pantry</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#5de619",
+                        "background-light": "#f6f8f6",
+                        "background-dark": "#162111",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen">
+<div class="max-w-md mx-auto min-h-screen flex flex-col pb-24 relative">
+<!-- Header & Search Section -->
+<header class="sticky top-0 z-30 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md px-4 pt-6 pb-2">
+<div class="flex items-center justify-between mb-4">
+<h1 class="text-2xl font-bold tracking-tight">Smart Pantry</h1>
+<button class="p-2 bg-slate-200/50 dark:bg-slate-800/50 rounded-full">
+<span class="material-icons text-xl block">account_circle</span>
+</button>
+</div>
+<div class="relative mb-6">
+<span class="material-icons absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+<input class="w-full bg-white dark:bg-slate-900 border-0 rounded-xl py-3 pl-10 pr-4 shadow-sm focus:ring-2 focus:ring-primary text-sm" placeholder="Search items..." type="text"/>
+</div>
+<!-- Tab Navigation -->
+<nav class="flex p-1 bg-slate-200/50 dark:bg-slate-800/50 rounded-xl mb-4">
+<button class="flex-1 py-2 text-sm font-medium rounded-lg bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white">Pantry</button>
+<button class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400">Fridge</button>
+<button class="flex-1 py-2 text-sm font-medium rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400">Shopping</button>
+</nav>
+</header>
+<main class="px-4 space-y-8">
+<!-- Smart Savings Banner (Shopping List Context) -->
+<section class="bg-primary/10 dark:bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="bg-primary text-white p-2 rounded-lg">
+<span class="material-icons">savings</span>
+</div>
+<div>
+<p class="text-xs uppercase font-bold tracking-wider text-primary/80">Smart Optimizer</p>
+<p class="text-lg font-bold">Save $12.50 today</p>
+</div>
+</div>
+<button class="bg-primary text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-sm">View Deals</button>
+</section>
+<!-- Expiring/Alert Section -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-sm font-bold uppercase tracking-widest text-slate-500">Expiring Soon</h2>
+<span class="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">3 Alerts</span>
+</div>
+<div class="space-y-3">
+<!-- Alert Card 1: Expiring -->
+<div class="bg-white dark:bg-slate-900 border-l-4 border-orange-500 rounded-lg p-4 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Fresh organic whole milk carton" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCCvZ6F_I_r5b-SWX0_KW-EiCroSdKvWuTbrbFkR9-FEU4TDGDhmE7nf0kf8Wap_aiBH1XWix0RaouRXblTut1t3JVNizE6cc65gxIP5FrHKQ4eBOuEmfwtO29-x0qSP80EaVf3pcwnU1aaXbmBS4ahnW3gtMy80t2KRu54xp7L8gRbYANh-rwRzBI1qIG_WeCbzJCVRrINWcXul7bMP54LsvB9C2tBHVs-jW5boFaLEI_FvG-Y7qg0NHNZDoaD3cbnorLV0H-hG4o"/>
+</div>
+<div class="flex-1">
+<h3 class="font-semibold text-sm">Organic Whole Milk</h3>
+<p class="text-orange-600 dark:text-orange-400 text-xs font-medium">Expires in 2 days</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-slate-500">QTY</p>
+<p class="font-bold">25%</p>
+</div>
+</div>
+<!-- Alert Card 2: Low Stock -->
+<div class="bg-white dark:bg-slate-900 border-l-4 border-primary rounded-lg p-4 shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Close up of roasted coffee beans" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsymd7K2mZHk6RkvOoLCiSxatBd_V8382dKQM7GSn2IuqiCySS98cgTzJ2UwzycYP9Vh-j1ywNZgrangLz4BHexw9speaXvYBLphMAZtnxdoPWh_FbJDn9AzKgxad8ETEcxbae_frIOMnZEt0NsRyPs4T88aEcI1yk0uQc8ENeYDQffX6mKtPUad5gqjw176dGZyIeyrnOj6PqxsEKtpyxveaRn6f8nqHh7hZU9Qins5K7y13JsMLeNw_K1hJL-mqbv7m0_u6GYS0"/>
+</div>
+<div class="flex-1">
+<h3 class="font-semibold text-sm">Arabica Coffee Beans</h3>
+<p class="text-slate-500 dark:text-slate-400 text-xs">Running very low</p>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-slate-500">QTY</p>
+<p class="font-bold text-primary">Low</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Pantry Inventory -->
+<section>
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-sm font-bold uppercase tracking-widest text-slate-500">Pantry Items</h2>
+<button class="text-xs font-semibold text-primary">Sort A-Z</button>
+</div>
+<div class="grid grid-cols-1 gap-3">
+<div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm flex items-center gap-4 border border-slate-200/50 dark:border-slate-800">
+<div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Package of dried penne pasta" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAycqG90tXNszTk-byx6yo7V1-Vbu92aWpeqmtvWCBnF5MW9Onv3NVpfucGkWv16O4-zSvFAXSM0hGF7qNDyrZ8hDoabgs023fP9jKI6Dam3omhzYgKV01-QTkB7ISG4-vdB1OhyvG-gWz6WRKG4-qdhqFsDFVtn0wG-rwobwZYUYP9dEIhhOmC_8HTfQAhHzuDUuQ_kdSljv9YDcZ4rsHYa2ThPlQKsg20jbz-o9fwdxI1R7YVwHmWvwclXyzi4tJu9DNwzAnnIbo"/>
+</div>
+<div class="flex-1">
+<h3 class="font-semibold text-sm">Penne Pasta</h3>
+<p class="text-slate-400 text-xs">Added: Oct 12</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-500">QTY</p>
+<p class="font-bold">2 units</p>
+</div>
+<span class="material-icons text-slate-300">more_vert</span>
+</div>
+</div>
+<div class="bg-white dark:bg-slate-900 rounded-xl p-4 shadow-sm flex items-center gap-4 border border-slate-200/50 dark:border-slate-800">
+<div class="w-12 h-12 bg-slate-100 dark:bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="Bottle of extra virgin olive oil" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpQJV6Rp5YkNfuaxjkg9CRBLDqJpk4zBiRLSHIbYKy1hme4yOQPmaqcI4CPaWVxjZmvzClSOwr_4hjZojDcJUmdFI1vZY9lcOve1EBDWmH1CGZyUsQurzJt6E8Y74lTtoFkUkr4X5v9YbjZvtyzMM0W_gZXpL6BKd39_tM-LDm6a8l6aYAaOPJJ8WTwmB7hVuXtIEiNwa7U-LAU5yja1nwNqvF52Jmk_ZOhJK2wk7CDgu6YuZ_sbyPGKIExpH3xwfTN2trcPuDrB0"/>
+</div>
+<div class="flex-1">
+<h3 class="font-semibold text-sm">Olive Oil</h3>
+<p class="text-slate-400 text-xs">Added: Oct 05</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="text-right">
+<p class="text-xs font-bold text-slate-500">QTY</p>
+<p class="font-bold">750ml</p>
+</div>
+<span class="material-icons text-slate-300">more_vert</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Store Optimized Shopping List -->
+<section class="pb-12">
+<div class="flex items-center justify-between mb-4">
+<h2 class="text-sm font-bold uppercase tracking-widest text-slate-500">Store Optimization</h2>
+</div>
+<div class="bg-slate-200/30 dark:bg-slate-900/50 rounded-2xl p-5 space-y-6">
+<!-- Store A -->
+<div>
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-blue-500"></span>
+<h4 class="font-bold text-sm">FreshMart Central</h4>
+</div>
+<span class="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">3 Items</span>
+</div>
+<ul class="space-y-2">
+<li class="flex justify-between items-center text-sm p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+<span class="text-slate-600 dark:text-slate-300">Whole Milk</span>
+<span class="font-bold">$3.20</span>
+</li>
+<li class="flex justify-between items-center text-sm p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+<span class="text-slate-600 dark:text-slate-300">Whole Wheat Bread</span>
+<span class="font-bold">$2.50</span>
+</li>
+</ul>
+</div>
+<!-- Store B -->
+<div>
+<div class="flex justify-between items-center mb-3">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-red-500"></span>
+<h4 class="font-bold text-sm">Discount Depot</h4>
+</div>
+<span class="text-xs font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded">2 Items</span>
+</div>
+<ul class="space-y-2">
+<li class="flex justify-between items-center text-sm p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm">
+<span class="text-slate-600 dark:text-slate-300">Coffee Beans</span>
+<span class="font-bold text-primary">$12.00</span>
+</li>
+</ul>
+</div>
+</div>
+</section>
+</main>
+<!-- Fixed Bottom Action Bar -->
+<div class="fixed bottom-0 left-0 right-0 p-6 pointer-events-none flex justify-end max-w-md mx-auto">
+<button class="pointer-events-auto bg-primary text-slate-900 w-16 h-16 rounded-full shadow-lg shadow-primary/40 flex items-center justify-center group relative active:scale-95 transition-transform">
+<span class="material-icons text-3xl">add</span>
+<!-- Tooltips/Quick Actions would expand here -->
+<div class="absolute bottom-20 right-0 flex flex-col gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-md flex items-center gap-2 whitespace-nowrap border border-slate-100 dark:border-slate-700">
+<span class="material-icons text-sm">qr_code_scanner</span>
+<span class="text-xs font-bold">Scan Barcode</span>
+</div>
+<div class="bg-white dark:bg-slate-800 px-4 py-2 rounded-lg shadow-md flex items-center gap-2 whitespace-nowrap border border-slate-100 dark:border-slate-700">
+<span class="material-icons text-sm">edit</span>
+<span class="text-xs font-bold">Manual Entry</span>
+</div>
+</div>
+</button>
+</div>
+<!-- Global Navigation Tab Bar -->
+<div class="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-8 py-3 max-w-md mx-auto">
+<div class="flex justify-between items-center">
+<button class="flex flex-col items-center gap-1 text-primary">
+<span class="material-icons">kitchen</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Pantry</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">shopping_cart</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">List</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">restaurant_menu</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Recipes</span>
+</button>
+<button class="flex flex-col items-center gap-1 text-slate-400">
+<span class="material-icons">settings</span>
+<span class="text-[10px] font-bold uppercase tracking-tighter">Settings</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>
