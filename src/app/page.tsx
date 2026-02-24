@@ -1,6 +1,14 @@
-import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin } from "lucide-react";
+"use client";
+
+import { useState, useEffect } from "react";
+import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer } from "lucide-react";
+import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
 
 export default function Home() {
+  const [weather, setWeather] = useState<WeatherData | null>(null);
+  const [locationName, setLocationName] = useState<string>("London, UK");
+  const [isLoading, setIsLoading] = useState(true);
+
   const days = [
     { day: "Mon", date: "12", current: false },
     { day: "Tue", date: "13", current: true },
@@ -22,8 +30,65 @@ export default function Home() {
     { icon: <Droplets size={24} />, name: "Fresh Milk", status: "2 days", color: "text-orange-500", bgColor: "bg-orange-50 dark:bg-orange-900/10" },
   ];
 
+  useEffect(() => {
+    const getFallbackWeather = async () => {
+      try {
+        const weatherData = await fetchWeather(51.5074, -0.1278);
+        setWeather(weatherData);
+        setLocationName("London, UK");
+      } catch (e) {
+        console.error("Fallback weather fetch failed", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          try {
+            const [weatherData, name] = await Promise.all([
+              fetchWeather(latitude, longitude),
+              reverseGeocode(latitude, longitude)
+            ]);
+            setWeather(weatherData);
+            setLocationName(name);
+          } catch (error) {
+            console.error("Failed to fetch weather", error);
+            getFallbackWeather();
+          } finally {
+            setIsLoading(false);
+          }
+        },
+        (error) => {
+          console.error("Geolocation error:", error);
+          getFallbackWeather();
+        },
+        { timeout: 5000 } // 5 second timeout
+      );
+    } else {
+      getFallbackWeather();
+    }
+  }, []);
+
+  const getWeatherIcon = (code: number) => {
+    if (code === 0) return <Sun size={28} />;
+    if (code <= 3) return <Cloud size={28} />;
+    if (code >= 61) return <CloudRain size={28} />;
+    return <Sun size={28} />;
+  };
+
+  const getDayName = () => {
+    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  };
+
+  const getDateStr = () => {
+    return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  };
+
   return (
-    <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
       {/* Header */}
       <header className="flex justify-between items-start">
         <div className="space-y-1">
@@ -36,7 +101,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold mt-4 tracking-tighter text-foreground">Good morning, Rebecca.</h1>
           <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
             <MapPin size={14} />
-            <span>London, UK • Thursday, 12 Oct</span>
+            <span>{locationName} • {getDayName()}, {getDateStr()}</span>
           </div>
         </div>
         <button className="bg-white dark:bg-aura-clay/50 p-3 rounded-2xl shadow-sm border border-aura-sand/30 dark:border-aura-clay/20 transition-premium hover:scale-110 active:scale-95">
@@ -72,11 +137,13 @@ export default function Home() {
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white dark:bg-aura-clay/50 rounded-2xl flex items-center justify-center text-primary shadow-sm">
-              <Sun size={28} />
+              {isLoading ? <Loader2 className="animate-spin" size={24} /> : (weather ? getWeatherIcon(weather.weatherCode) : <Sun size={28} />)}
             </div>
             <div>
               <p className="text-xs font-bold text-primary uppercase tracking-widest">Weather Intelligence</p>
-              <h3 className="text-xl font-bold text-foreground">22°C • Sunny</h3>
+              <h3 className="text-xl font-bold text-foreground">
+                {isLoading ? "Fetching..." : (weather ? `${weather.temp}°C • ${weather.condition}` : "22°C • Sunny")}
+              </h3>
             </div>
           </div>
           <div className="p-2 bg-white dark:bg-aura-clay/50 rounded-xl shadow-sm">
@@ -85,11 +152,20 @@ export default function Home() {
         </div>
         <div className="space-y-2">
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-            Perfect for the <span className="text-foreground font-bold underline decoration-primary/30">Linen Shirt & Chinos</span> you haven't worn in 8 days.
+            {weather && weather.temp < 15
+              ? "A bit chilly today. We suggest the "
+              : "Perfect for the "}
+            <span className="text-foreground font-bold underline decoration-primary/30">
+              {weather && weather.temp < 15 ? "Wool Blend Overcoat & Knit" : "Linen Shirt & Chinos"}
+            </span> you haven't worn in {weather && weather.temp < 15 ? "12" : "8"} days.
           </p>
           <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest">
             <AlertCircle size={10} />
-            <span>Evening Walk suggested at 4:30 PM (before sunset)</span>
+            <span>
+              {weather && weather.weatherCode >= 61
+                ? "Rain expected. Reschedule walk to tomorrow?"
+                : "Evening Walk suggested at 4:30 PM (before sunset)"}
+            </span>
           </div>
         </div>
       </section>
@@ -141,3 +217,4 @@ export default function Home() {
     </div>
   );
 }
+

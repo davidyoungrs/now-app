@@ -1,6 +1,6 @@
 "use client";
 
-import { User, Bell, Shield, Moon, Palette, HelpCircle, LogOut, ChevronRight } from "lucide-react";
+import { User, Bell, Shield, Moon, Palette, HelpCircle, LogOut, ChevronRight, MapPin } from "lucide-react";
 
 export default function Settings() {
     const sections = [
@@ -8,6 +8,7 @@ export default function Settings() {
             title: "Profile",
             items: [
                 { icon: User, label: "Personal Information", value: "David Y." },
+                { icon: MapPin, label: "Primary Location", value: "Browser Location" },
                 { icon: Bell, label: "Notifications", value: "On" },
             ]
         },
