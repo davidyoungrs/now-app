@@ -21,29 +21,32 @@ export default function Navigation() {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-slate-950/90 backdrop-blur-xl border-t border-slate-200 dark:border-slate-800 px-8 py-3 max-w-md mx-auto z-50">
-            <div className="flex justify-between items-center">
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    const Icon = item.icon;
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 glass rounded-[2.5rem] shadow-2xl z-50 transition-premium max-w-fit mx-auto">
+            {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                const Icon = item.icon;
 
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={cn(
-                                "flex flex-col items-center gap-1 transition-colors duration-200",
-                                isActive ? "text-primary" : "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
-                            )}
-                        >
-                            <Icon size={24} />
-                            <span className="text-[10px] font-bold uppercase tracking-tighter">
-                                {item.label}
-                            </span>
-                        </Link>
-                    );
-                })}
-            </div>
+                return (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                            "relative flex flex-col items-center justify-center w-14 h-14 rounded-[2rem] transition-premium group",
+                            isActive
+                                ? "bg-slate-900 dark:bg-primary text-white dark:text-slate-900 shadow-xl"
+                                : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                        )}
+                    >
+                        <Icon size={22} className={cn("transition-premium", isActive ? "scale-110" : "group-hover:scale-110")} />
+                        <span className={cn(
+                            "absolute -bottom-8 text-[9px] font-bold uppercase tracking-widest opacity-0 transition-premium",
+                            isActive ? "opacity-100 -bottom-6" : "group-hover:opacity-100 group-hover:-bottom-6"
+                        )}>
+                            {item.label}
+                        </span>
+                    </Link>
+                );
+            })}
         </div>
     );
 }

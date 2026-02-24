@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, User, Savings, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2 } from "lucide-react";
+import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2 } from "lucide-react";
 import { useState } from "react";
 
 export default function Pantry() {
@@ -51,8 +51,8 @@ export default function Pantry() {
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all duration-200 ${activeTab === tab
-                                    ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white"
-                                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                                ? "bg-white dark:bg-slate-700 shadow-sm text-slate-900 dark:text-white"
+                                : "text-slate-500 hover:text-slate-700 dark:text-slate-400"
                                 }`}
                         >
                             {tab}
@@ -63,17 +63,17 @@ export default function Pantry() {
 
             <main className="px-4 pb-32 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 {/* Smart Savings */}
-                <section className="bg-primary/10 dark:bg-primary/5 border border-primary/20 rounded-3xl p-5 flex items-center justify-between">
+                <section className="bg-primary/10 dark:bg-primary/5 border border-primary/20 rounded-3xl p-5 flex items-center justify-between cursor-pointer group transition-premium hover:bg-primary/20">
                     <div className="flex items-center gap-4">
-                        <div className="bg-primary text-white p-3 rounded-2xl shadow-lg shadow-primary/20">
-                            <span className="material-icons">savings</span>
+                        <div className="bg-primary text-white p-3 rounded-2xl shadow-lg shadow-primary/20 transition-premium group-hover:scale-110">
+                            <PiggyBank size={24} />
                         </div>
                         <div>
                             <p className="text-[10px] uppercase font-bold tracking-widest text-primary/80">Smart Optimizer</p>
                             <p className="text-xl font-bold">Save $12.50 today</p>
                         </div>
                     </div>
-                    <button className="bg-primary text-slate-900 px-5 py-2.5 rounded-2xl text-sm font-bold shadow-sm active:scale-95 transition-transform">
+                    <button className="bg-primary text-slate-900 px-5 py-2.5 rounded-2xl text-sm font-bold shadow-sm active:scale-95 transition-premium">
                         View Deals
                     </button>
                 </section>
@@ -82,14 +82,14 @@ export default function Pantry() {
                 <section className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Pantry Items</h2>
-                        <button className="text-xs font-bold text-primary">Sort A-Z</button>
+                        <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">Sort A-Z</button>
                     </div>
 
                     <div className="space-y-3">
                         {pantryItems.map((item, idx) => (
-                            <div key={idx} className="glass rounded-[1.5rem] p-4 flex items-center gap-4 group">
+                            <div key={idx} className="glass rounded-[1.5rem] p-4 flex items-center gap-4 group cursor-pointer transition-premium hover:scale-[1.01] active:scale-[0.98]">
                                 <div className="w-14 h-14 bg-slate-100 dark:bg-slate-800 rounded-2xl overflow-hidden shadow-inner">
-                                    <img className="w-full h-full object-cover transition-transform group-hover:scale-110" src={item.image} alt={item.name} />
+                                    <img className="w-full h-full object-cover transition-premium group-hover:scale-110" src={item.image} alt={item.name} />
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="font-bold">{item.name}</h3>
@@ -100,7 +100,7 @@ export default function Pantry() {
                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">QTY</p>
                                         <p className="font-bold">{item.qty}</p>
                                     </div>
-                                    <button className="text-slate-300 hover:text-slate-500">
+                                    <button className="text-slate-300 hover:text-slate-500 transition-colors">
                                         <MoreVertical size={20} />
                                     </button>
                                 </div>
@@ -125,8 +125,8 @@ export default function Pantry() {
                                     </span>
                                 </div>
                                 <div className="space-y-2">
-                                    {store.items.map((item, i) => (
-                                        <div key={i} className="flex justify-between items-center text-sm p-3.5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
+                                    {store.items.map((item: any, i) => (
+                                        <div key={i} className="flex justify-between items-center text-sm p-3.5 bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer transition-premium hover:shadow-md active:scale-95">
                                             <span className="text-slate-600 dark:text-slate-300 font-medium">{item.name}</span>
                                             <span className={`font-bold ${item.highlight ? "text-primary" : ""}`}>{item.price}</span>
                                         </div>
