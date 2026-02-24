@@ -9,7 +9,8 @@ export default function Home() {
   const [locationName, setLocationName] = useState<string>("London, UK");
   const [isLoading, setIsLoading] = useState(true);
 
-  const [days, setDays] = useState<{ day: string; date: string; current: boolean; fullDate: Date }[]>([]);
+  const [days, setDays] = useState<{ day: string; date: string; isToday: boolean; fullDate: Date }[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -24,7 +25,7 @@ export default function Home() {
         generated.push({
           day: d.toLocaleDateString("en-US", { weekday: "short" }),
           date: d.getDate().toString(),
-          current: d.toDateString() === today.toDateString(),
+          isToday: d.toDateString() === today.toDateString(),
           fullDate: d
         });
       }
@@ -34,21 +35,37 @@ export default function Home() {
     generateDays();
   }, []);
 
-  // Scroll to current day
+  // Scroll to current day only on initial mount
   useEffect(() => {
     if (scrollRef.current && days.length > 0) {
-      const activeElement = scrollRef.current.querySelector('[data-current="true"]');
+      const activeElement = scrollRef.current.querySelector('[data-today="true"]');
       if (activeElement) {
         activeElement.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
       }
     }
-  }, [days]);
+  }, [days.length > 0]);
 
-  const schedule = [
-    { time: "10:00 AM", title: "Focus Session", description: "Deep work: Design System", color: "bg-primary" },
-    { time: "12:30 PM", title: "Meal Prep", description: "Health: Use items expiring today", color: "bg-sage" },
-    { time: "4:00 PM", title: "Evening Walk", description: "Minimal living routine", color: "bg-sage" },
-  ];
+  // Dynamic schedule based on selected date
+  const getScheduleForDate = (date: Date) => {
+    const day = date.getDay(); // 0 (Sun) to 6 (Sat)
+
+    // Just a simple mock diversity
+    if (day === 0 || day === 6) { // Weekend
+      return [
+        { time: "11:00 AM", title: "Sunday Brunch", description: "Health: Farmers Market visit", color: "bg-sage" },
+        { time: "2:30 PM", title: "Wardrobe Sort", description: "Minimalism: Seasonal rotation", color: "bg-primary" },
+        { time: "6:00 PM", title: "Reflection", description: "Weekly goal setting", color: "bg-sage" },
+      ];
+    }
+
+    return [
+      { time: "10:00 AM", title: "Focus Session", description: "Deep work: Design System", color: "bg-primary" },
+      { time: "12:30 PM", title: "Meal Prep", description: "Health: Use items expiring today", color: "bg-sage" },
+      { time: "4:00 PM", title: "Evening Walk", description: "Minimal living routine", color: "bg-sage" },
+    ];
+  };
+
+  const currentSchedule = getScheduleForDate(selectedDate);
 
   const alerts = [
     { icon: <Leaf size={24} />, name: "Spinach", status: "Today", color: "text-red-500", bgColor: "bg-red-50 dark:bg-red-900/10" },
@@ -104,12 +121,14 @@ export default function Home() {
     return <Sun size={28} />;
   };
 
-  const getDayName = () => {
-    return new Date().toLocaleDateString('en-US', { weekday: 'long' });
+  const getDayName = (date: Date) => {
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) return "Today";
+    return date.toLocaleDateString('en-US', { weekday: 'long' });
   };
 
-  const getDateStr = () => {
-    return new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  const getDateStr = (date: Date) => {
+    return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
   return (
@@ -126,7 +145,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold mt-4 tracking-tighter text-foreground">Good morning, Rebecca.</h1>
           <div className="flex items-center gap-2 text-slate-500 text-sm mt-1">
             <MapPin size={14} />
-            <span>{locationName} • {getDayName()}, {getDateStr()}</span>
+            <span>{locationName} • {getDayName(selectedDate)}, {getDateStr(selectedDate)}</span>
           </div>
         </div>
         <button className="bg-white dark:bg-aura-clay/50 p-3 rounded-2xl shadow-sm border border-aura-sand/30 dark:border-aura-clay/20 transition-premium hover:scale-110 active:scale-95">
@@ -141,20 +160,24 @@ export default function Home() {
           <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">Full View</button>
         </div>
         <div ref={scrollRef} className="flex gap-2 overflow-x-auto pb-2 no-scrollbar scroll-smooth">
-          {days.map((d, idx) => (
-            <div
-              key={idx}
-              data-current={d.current}
-              className={`flex-shrink-0 w-12 py-4 rounded-2xl flex flex-col items-center gap-1 transition-premium cursor-pointer ${d.current
-                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
-                : "bg-white dark:bg-aura-clay/30 text-slate-500 border border-aura-sand/20 hover:border-primary/50"
-                }`}
-            >
-              <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70">{d.day}</span>
-              <span className="text-lg font-bold tracking-tighter">{d.date}</span>
-              {d.current && <div className="w-1 h-1 bg-white rounded-full mt-1" />}
-            </div>
-          ))}
+          {days.map((d, idx) => {
+            const isSelected = d.fullDate.toDateString() === selectedDate.toDateString();
+            return (
+              <div
+                key={idx}
+                data-today={d.isToday}
+                onClick={() => setSelectedDate(d.fullDate)}
+                className={`flex-shrink-0 w-12 py-4 rounded-2xl flex flex-col items-center gap-1 transition-premium cursor-pointer ${isSelected
+                  ? "bg-primary text-white shadow-lg shadow-primary/20 scale-105"
+                  : "bg-white dark:bg-aura-clay/30 text-slate-500 border border-aura-sand/20 hover:border-primary/50"
+                  }`}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70">{d.day}</span>
+                <span className="text-lg font-bold tracking-tighter">{d.date}</span>
+                {d.isToday && <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? "bg-white" : "bg-primary"}`} />}
+              </div>
+            );
+          })}
         </div>
       </section>
 
@@ -166,7 +189,9 @@ export default function Home() {
               {isLoading ? <Loader2 className="animate-spin" size={24} /> : (weather ? getWeatherIcon(weather.weatherCode) : <Sun size={28} />)}
             </div>
             <div>
-              <p className="text-xs font-bold text-primary uppercase tracking-widest">Weather Intelligence</p>
+              <p className="text-xs font-bold text-primary uppercase tracking-widest">
+                {selectedDate.toDateString() === new Date().toDateString() ? "Weather Intelligence" : "Forecast Insight"}
+              </p>
               <h3 className="text-xl font-bold text-foreground">
                 {isLoading ? "Fetching..." : (weather ? `${weather.temp}°C • ${weather.condition}` : "22°C • Sunny")}
               </h3>
@@ -179,7 +204,7 @@ export default function Home() {
         <div className="space-y-2">
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
             {weather && weather.temp < 15
-              ? "A bit chilly today. We suggest the "
+              ? "A bit chilly. We suggest the "
               : "Perfect for the "}
             <span className="text-foreground font-bold underline decoration-primary/30">
               {weather && weather.temp < 15 ? "Wool Blend Overcoat & Knit" : "Linen Shirt & Chinos"}
@@ -189,8 +214,8 @@ export default function Home() {
             <AlertCircle size={10} />
             <span>
               {weather && weather.weatherCode >= 61
-                ? "Rain expected. Reschedule walk to tomorrow?"
-                : "Evening Walk suggested at 4:30 PM (before sunset)"}
+                ? "Rain expected. Reschedule plans?"
+                : "Plan your evening walk around 4:30 PM."}
             </span>
           </div>
         </div>
@@ -200,7 +225,7 @@ export default function Home() {
       <section className="space-y-4">
         <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Timeline</h2>
         <div className="space-y-4 relative before:absolute before:inset-y-0 before:left-3 before:w-px before:bg-aura-sand/30 dark:before:bg-aura-clay/30">
-          {schedule.map((item, idx) => (
+          {currentSchedule.map((item, idx) => (
             <div key={idx} className="flex gap-6 relative pl-8 group cursor-pointer">
               <div className={`absolute left-0 top-1.5 w-6 h-6 rounded-full border-4 border-aura-cream dark:border-aura-clay transition-premium group-hover:scale-125 ${item.color}`} />
               <div className="flex-1 glass p-5 rounded-3xl transition-premium group-hover:translate-x-1 group-active:scale-95 shadow-sm border border-white/50">
