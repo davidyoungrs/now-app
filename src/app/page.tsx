@@ -49,12 +49,19 @@ export default function Home() {
   const getScheduleForDate = (date: Date) => {
     const day = date.getDay(); // 0 (Sun) to 6 (Sat)
 
-    // Just a simple mock diversity
-    if (day === 0 || day === 6) { // Weekend
+    if (day === 0) { // Sunday
       return [
-        { time: "11:00 AM", title: "Sunday Brunch", description: "Health: Farmers Market visit", color: "bg-sage" },
-        { time: "2:30 PM", title: "Wardrobe Sort", description: "Minimalism: Seasonal rotation", color: "bg-primary" },
+        { time: "11:00 AM", title: "Sunday Brunch", description: "Health: Farmers Market visit", color: "bg-primary" },
+        { time: "2:30 PM", title: "Wardrobe Sort", description: "Minimalism: Seasonal rotation", color: "bg-sage" },
         { time: "6:00 PM", title: "Reflection", description: "Weekly goal setting", color: "bg-sage" },
+      ];
+    }
+
+    if (day === 6) { // Saturday
+      return [
+        { time: "10:00 AM", title: "Morning Yoga", description: "Health: 45 min session", color: "bg-sage" },
+        { time: "1:00 PM", title: "Local Market", description: "Minimalism: Zero waste run", color: "bg-primary" },
+        { time: "7:00 PM", title: "Reading Hour", description: "Analog relaxation", color: "bg-sage" },
       ];
     }
 
@@ -134,8 +141,12 @@ export default function Home() {
   const getDisplayWeather = () => {
     if (!weather) return null;
 
-    // Look for matching date in forecast
-    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    // Look for matching date in forecast (format: YYYY-MM-DD)
+    const year = selectedDate.getFullYear();
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const selectedDateStr = `${year}-${month}-${day}`;
+
     const dailyData = weather.forecast.find(f => f.date === selectedDateStr);
 
     if (dailyData) {
@@ -146,7 +157,7 @@ export default function Home() {
       };
     }
 
-    // Fallback to current if no forecast match (e.g. today early morning)
+    // Fallback if no forecast match
     return {
       temp: weather.temp,
       condition: weather.condition,
