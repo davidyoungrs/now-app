@@ -131,6 +131,32 @@ export default function Home() {
     return date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
   };
 
+  const getDisplayWeather = () => {
+    if (!weather) return null;
+
+    // Look for matching date in forecast
+    const selectedDateStr = selectedDate.toISOString().split('T')[0];
+    const dailyData = weather.forecast.find(f => f.date === selectedDateStr);
+
+    if (dailyData) {
+      return {
+        temp: dailyData.tempMax,
+        condition: dailyData.condition,
+        weatherCode: dailyData.weatherCode
+      };
+    }
+
+    // Fallback to current if no forecast match (e.g. today early morning)
+    return {
+      temp: weather.temp,
+      condition: weather.condition,
+      weatherCode: weather.weatherCode
+    };
+  };
+
+  const displayWeather = getDisplayWeather();
+  const isSelectedToday = selectedDate.toDateString() === new Date().toDateString();
+
   return (
     <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
       {/* Header */}
@@ -186,14 +212,14 @@ export default function Home() {
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white dark:bg-aura-clay/50 rounded-2xl flex items-center justify-center text-primary shadow-sm">
-              {isLoading ? <Loader2 className="animate-spin" size={24} /> : (weather ? getWeatherIcon(weather.weatherCode) : <Sun size={28} />)}
+              {isLoading ? <Loader2 className="animate-spin" size={24} /> : (displayWeather ? getWeatherIcon(displayWeather.weatherCode) : <Sun size={28} />)}
             </div>
             <div>
               <p className="text-xs font-bold text-primary uppercase tracking-widest">
-                {selectedDate.toDateString() === new Date().toDateString() ? "Weather Intelligence" : "Forecast Insight"}
+                {isSelectedToday ? "Weather Intelligence" : "Forecast Insight"}
               </p>
               <h3 className="text-xl font-bold text-foreground">
-                {isLoading ? "Fetching..." : (weather ? `${weather.temp}°C • ${weather.condition}` : "22°C • Sunny")}
+                {isLoading ? "Fetching..." : (displayWeather ? `${displayWeather.temp}°C • ${displayWeather.condition}` : "22°C • Sunny")}
               </h3>
             </div>
           </div>
@@ -203,19 +229,19 @@ export default function Home() {
         </div>
         <div className="space-y-2">
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-            {weather && weather.temp < 15
-              ? "A bit chilly. We suggest the "
-              : "Perfect for the "}
+            {displayWeather && displayWeather.temp < 15
+              ? `A bit chilly ${isSelectedToday ? "today" : "on this day"}. We suggest the `
+              : `Perfect for the `}
             <span className="text-foreground font-bold underline decoration-primary/30">
-              {weather && weather.temp < 15 ? "Wool Blend Overcoat & Knit" : "Linen Shirt & Chinos"}
-            </span> you haven't worn in {weather && weather.temp < 15 ? "12" : "8"} days.
+              {displayWeather && displayWeather.temp < 15 ? "Wool Blend Overcoat & Knit" : "Linen Shirt & Chinos"}
+            </span> you haven't worn in {displayWeather && displayWeather.temp < 15 ? "12" : "8"} days.
           </p>
           <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase tracking-widest">
             <AlertCircle size={10} />
             <span>
-              {weather && weather.weatherCode >= 61
+              {displayWeather && displayWeather.weatherCode >= 61
                 ? "Rain expected. Reschedule plans?"
-                : "Plan your evening walk around 4:30 PM."}
+                : isSelectedToday ? "Evening Walk suggested at 4:30 PM (before sunset)" : "Good day for your routine."}
             </span>
           </div>
         </div>

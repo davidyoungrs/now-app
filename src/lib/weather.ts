@@ -3,12 +3,20 @@
  * Uses Open-Meteo (free, no API key required)
  */
 
+export interface DailyForecast {
+    date: string;
+    tempMax: number;
+    weatherCode: number;
+    condition: string;
+}
+
 export interface WeatherData {
     temp: number;
     condition: string;
     location: string;
     isDay: boolean;
     weatherCode: number;
+    forecast: DailyForecast[];
 }
 
 // Maps WMO Weather interpretation codes to human readable conditions
@@ -36,7 +44,7 @@ const weatherCodeMap: Record<number, string> = {
 };
 
 export async function fetchWeather(lat: number, lon: number): Promise<WeatherData> {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,is_day,weather_code&timezone=auto`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,is_day,weather_code&daily=weather_code,temperature_2m_max&timezone=auto`;
 
     try {
         const response = await fetch(url);
@@ -44,13 +52,22 @@ export async function fetchWeather(lat: number, lon: number): Promise<WeatherDat
 
         const data = await response.json();
         const current = data.current;
+        const daily = data.daily;
+
+        const forecast: DailyForecast[] = daily.time.map((time: string, index: number) => ({
+            date: time,
+            tempMax: Math.round(daily.temperature_2m_max[index]),
+            weatherCode: daily.weather_code[index],
+            condition: weatherCodeMap[daily.weather_code[index]] || "Sunny",
+        }));
 
         return {
             temp: Math.round(current.temperature_2m),
             condition: weatherCodeMap[current.weather_code] || "Sunny",
-            location: "Current Location", // We'll refine this with reverse geocoding if needed
+            location: "Current Location",
             isDay: current.is_day === 1,
             weatherCode: current.weather_code,
+            forecast,
         };
     } catch (error) {
         console.error("Error fetching weather:", error);
