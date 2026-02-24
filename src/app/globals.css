@@ -22,11 +22,18 @@
 
 @theme {
   --color-primary: var(--primary);
-  --color-accent: var(--aura-accent);
-  --color-sage: var(--aura-sage);
-  --color-cream: var(--aura-cream);
+  --color-aura-accent: var(--aura-accent);
+  --color-aura-sage: var(--aura-sage);
+  --color-aura-cream: var(--aura-cream);
+  --color-aura-clay: var(--aura-clay);
+  --color-aura-sand: var(--aura-sand);
+  --color-aura-moss: var(--aura-moss);
   --color-background-light: var(--background);
   --color-background-dark: var(--secondary);
+}
+
+@utility transition-premium {
+  transition: all 600ms var(--ease-premium);
 }
 
 body {
@@ -102,10 +109,6 @@ body {
 
 .animate-fluid {
   animation: fluid-bounce 3s ease-in-out infinite;
-}
-
-.transition-premium {
-  transition: all 600ms var(--ease-premium);
 }
 
 /* Organic components */
