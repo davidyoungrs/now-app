@@ -189,60 +189,6 @@ export default function Home() {
 
   return (
     <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
-      {/* Waste Zero Notification */}
-      {expiringItems.length > 0 && isSelectedToday && (
-        <section className="bg-aura-sand/15 border border-aura-sand/30 p-6 rounded-[2.5rem] space-y-4 animate-in fade-in zoom-in duration-700">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
-                <Leaf size={24} />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Waste Zero</p>
-                <h3 className="text-xl font-bold tracking-tight text-foreground">{expiringItems[0].name} Needs Using</h3>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minimal Living</p>
-            </div>
-          </div>
-          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/50">
-            "Your {expiringItems[0].name.toLowerCase()} is expiring soon. Why not make a quick {expiringItems[0].name.toLowerCase() === 'milk' ? 'smoothie or latte' : 'pasta dish'} today?"
-          </p>
-        </section>
-      )}
-
-      {/* Sustainability & Zero-Waste Streak */}
-      {isSelectedToday && (
-        <section className="bg-gradient-to-br from-primary/20 to-aura-sage/20 border border-primary/20 p-6 rounded-[2.5rem] relative overflow-hidden group transition-premium hover:shadow-xl hover:shadow-primary/10">
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all" />
-          <div className="flex justify-between items-center relative z-10">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white dark:bg-aura-clay/50 rounded-2xl flex flex-col items-center justify-center shadow-lg border border-primary/10">
-                <span className="text-xl font-bold text-primary leading-none">{sustainability.streak}</span>
-                <span className="text-[8px] font-bold text-slate-400 uppercase">Days</span>
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-primary uppercase tracking-widest animate-pulse">Zero-Waste Streak</p>
-                <h3 className="text-xl font-bold text-foreground">Aura's Champion</h3>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Impact</p>
-              <p className="text-lg font-bold text-primary">-{sustainability.diverted_kg}kg</p>
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-2 bg-white/40 dark:bg-black/20 p-3 rounded-2xl border border-white/50">
-            <div className="bg-aura-sage text-aura-sage-dark p-1.5 rounded-lg">
-              <Leaf size={14} />
-            </div>
-            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
-              "You've diverted <span className="text-primary font-bold">{sustainability.diverted_kg}kg</span> of food from waste this month—that's a <span className="text-aura-sage-dark font-bold">{sustainability.improvementPercent}%</span> improvement!"
-            </p>
-          </div>
-        </section>
-      )}
-
       {/* Forecast Modal */}
       {showForecast && (
         <div
@@ -411,68 +357,90 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Proactive Aura Insights */}
-      {(kitchenSink || proactiveRestock.length > 0) && isSelectedToday && (
-        <section className="space-y-4">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Proactive Insights</h2>
-          <div className="space-y-4">
-            {kitchenSink && (
-              <div className="bg-aura-sage/10 border border-aura-sage/20 rounded-[2rem] p-5 flex items-center justify-between group transition-premium hover:bg-aura-sage/15 cursor-pointer">
-                <div className="flex items-center gap-4">
-                  <div className="bg-aura-sage text-aura-sage-dark p-3 rounded-xl shadow-md">
-                    <Leaf size={20} />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-aura-sage-dark">Multi-Item Solution</p>
-                    <p className="text-sm font-bold text-foreground">{kitchenSink.name}</p>
-                    <p className="text-[10px] text-slate-500 max-w-[200px]">Use up your {kitchenSink.items.join(', ')}.</p>
-                  </div>
-                </div>
-                <ChevronRight size={16} className="text-aura-sage-dark opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-              </div>
-            )}
+      {/* Proactive Aura Insights (grouped with Waste Zero) */}
+      <section className="space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Proactive Insights</h2>
+        <div className="space-y-4">
 
-            {proactiveRestock.length > 0 && (
-              <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-5 space-y-3">
+          {/* Waste Zero Notification */}
+          {expiringItems.length > 0 && isSelectedToday && (
+            <div className="bg-aura-sand/15 border border-aura-sand/30 p-6 rounded-[2.5rem] space-y-4 animate-in fade-in zoom-in duration-700">
+              <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
-                  <div className="bg-primary text-white p-2.5 rounded-xl shadow-md">
-                    <AlertCircle size={20} />
+                  <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                    <Leaf size={24} />
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Habitual Restock</p>
-                    <p className="text-sm font-bold text-foreground">Aura predicts these for today:</p>
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Waste Zero</p>
+                    <h3 className="text-xl font-bold tracking-tight text-foreground">{expiringItems[0].name} Needs Using</h3>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
-                  {proactiveRestock.map((item, i) => (
-                    <span key={i} className="px-3 py-1 bg-white dark:bg-aura-clay/50 border border-primary/10 rounded-full text-[10px] font-bold text-primary">
-                      + {item}
-                    </span>
-                  ))}
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minimal Living</p>
                 </div>
               </div>
-            )}
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/50">
+                "Your {expiringItems[0].name.toLowerCase()} is expiring soon. Why not make a quick {expiringItems[0].name.toLowerCase() === 'milk' ? 'smoothie or latte' : 'pasta dish'} today?"
+              </p>
+            </div>
+          )}
 
-            {storageTip && (
-              <div className="bg-aura-sand/15 border border-aura-sand/30 rounded-[2rem] p-5 flex items-start gap-4">
-                <div className="bg-white dark:bg-aura-clay/50 text-primary p-3 rounded-xl shadow-sm border border-aura-sand/20">
-                  {storageTip.icon === 'Leaf' ? <Leaf size={20} /> :
-                    storageTip.icon === 'Wind' ? <Wind size={20} /> :
-                      storageTip.icon === 'Snowflake' ? <Snowflake size={20} /> :
-                        storageTip.icon === 'Droplets' ? <Droplets size={20} /> :
-                          <AlertCircle size={20} />}
+          {kitchenSink && isSelectedToday && (
+            <div className="bg-aura-sage/10 border border-aura-sage/20 rounded-[2rem] p-5 flex items-center justify-between group transition-premium hover:bg-aura-sage/15 cursor-pointer">
+              <div className="flex items-center gap-4">
+                <div className="bg-aura-sage text-aura-sage-dark p-3 rounded-xl shadow-md">
+                  <Leaf size={20} />
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Storage Science</p>
-                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{storageTip.tip}</p>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-aura-sage-dark">Multi-Item Solution</p>
+                  <p className="text-sm font-bold text-foreground">{kitchenSink.name}</p>
+                  <p className="text-[10px] text-slate-500 max-w-[200px]">Use up your {kitchenSink.items.join(', ')}.</p>
                 </div>
               </div>
-            )}
-          </div>
-        </section>
-      )}
+              <ChevronRight size={16} className="text-aura-sage-dark opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            </div>
+          )}
 
-      {/* Expiring Soon */}
+          {proactiveRestock.length > 0 && isSelectedToday && (
+            <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-5 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="bg-primary text-white p-2.5 rounded-xl shadow-md">
+                  <AlertCircle size={20} />
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Habitual Restock</p>
+                  <p className="text-sm font-bold text-foreground">Aura predicts these for today:</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {proactiveRestock.map((item, i) => (
+                  <span key={i} className="px-3 py-1 bg-white dark:bg-aura-clay/50 border border-primary/10 rounded-full text-[10px] font-bold text-primary">
+                    + {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {storageTip && isSelectedToday && (
+            <div className="bg-aura-sand/15 border border-aura-sand/30 rounded-[2rem] p-5 flex items-start gap-4">
+              <div className="bg-white dark:bg-aura-clay/50 text-primary p-3 rounded-xl shadow-sm border border-aura-sand/20">
+                {storageTip.icon === 'Leaf' ? <Leaf size={20} /> :
+                  storageTip.icon === 'Wind' ? <Wind size={20} /> :
+                    storageTip.icon === 'Snowflake' ? <Snowflake size={20} /> :
+                      storageTip.icon === 'Droplets' ? <Droplets size={20} /> :
+                        <AlertCircle size={20} />}
+              </div>
+              <div>
+                <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Storage Science</p>
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{storageTip.tip}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Inventory Status (Expiring Soon) */}
       <section className="space-y-4">
         <div className="flex justify-between items-end">
           <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Inventory Status</h2>
@@ -494,6 +462,37 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Sustainability & Zero-Waste Streak (Aura's Champion) */}
+      {isSelectedToday && (
+        <section className="bg-gradient-to-br from-primary/20 to-aura-sage/20 border border-primary/20 p-6 rounded-[2.5rem] relative overflow-hidden group transition-premium hover:shadow-xl hover:shadow-primary/10">
+          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all" />
+          <div className="flex justify-between items-center relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white dark:bg-aura-clay/50 rounded-2xl flex flex-col items-center justify-center shadow-lg border border-primary/10">
+                <span className="text-xl font-bold text-primary leading-none">{sustainability.streak}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">Days</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest animate-pulse">Zero-Waste Streak</p>
+                <h3 className="text-xl font-bold text-foreground">Aura's Champion</h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Impact</p>
+              <p className="text-lg font-bold text-primary">-{sustainability.diverted_kg}kg</p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 bg-white/40 dark:bg-black/20 p-3 rounded-2xl border border-white/50">
+            <div className="bg-aura-sage text-aura-sage-dark p-1.5 rounded-lg">
+              <Leaf size={14} />
+            </div>
+            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              "You've diverted <span className="text-primary font-bold">{sustainability.diverted_kg}kg</span> of food from waste this month—that's a <span className="text-aura-sage-dark font-bold">{sustainability.improvementPercent}%</span> improvement!"
+            </p>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
