@@ -607,9 +607,9 @@ export default function Pantry() {
 
                         {/* Pantry Items */}
                         <section className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">{activeTab} Inventory</h2>
-                                <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">Sort by Expiry</button>
+                            <div className="flex items-center justify-between gap-4">
+                                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 whitespace-nowrap">{activeTab} Inventory</h2>
+                                <button className="text-[10px] sm:text-xs font-bold text-primary transition-premium hover:opacity-70 whitespace-nowrap truncate">Sort by Expiry</button>
                             </div>
 
                             <div className="space-y-3">
@@ -628,21 +628,21 @@ export default function Pantry() {
                                             <div className="w-14 h-14 bg-aura-sand/20 dark:bg-aura-clay/50 rounded-2xl overflow-hidden shadow-inner border border-aura-sand/10 relative">
                                                 <img className="w-full h-full object-cover transition-premium group-hover:scale-110" src={item.image} alt={item.name} />
                                             </div>
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-foreground">{item.name}</h3>
-                                                <div className="flex items-center gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-foreground truncate">{item.name}</h3>
+                                                <div className="flex items-center gap-1.5 mt-0.5 whitespace-nowrap overflow-hidden">
                                                     {expiryInfo.urgency === 'soon' || expiryInfo.urgency === 'today' ? (
-                                                        <AlertTriangle size={10} className="text-orange-400" />
+                                                        <AlertTriangle size={10} className="text-orange-400 flex-shrink-0" />
                                                     ) : null}
-                                                    <p className={`text-[10px] font-bold uppercase tracking-widest ${expiryInfo.urgency === 'today' ? 'text-orange-500' : 'text-slate-400'}`}>
+                                                    <p className={`text-[10px] font-bold uppercase tracking-widest truncate ${expiryInfo.urgency === 'today' ? 'text-orange-500' : 'text-slate-400'}`}>
                                                         {expiryInfo.label}
                                                     </p>
-                                                    <span className={`ml-2 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${getCategoryColor(item.category)}`}>
+                                                    <span className={`ml-1 text-[8px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border flex-shrink-0 ${getCategoryColor(item.category)}`}>
                                                         {item.category}
                                                     </span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-2 flex-shrink-0">
                                                 <div className="text-right mr-2">
                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">QTY</p>
                                                     <p className="font-bold text-foreground">{item.qty}</p>
@@ -652,34 +652,48 @@ export default function Pantry() {
                                                         e.stopPropagation();
                                                         handleReduce(item);
                                                     }}
-                                                    className="w-10 h-10 bg-aura-sand/20 text-aura-sand-dark rounded-xl flex items-center justify-center hover:bg-aura-sand/40 transition-premium"
+                                                    className="w-8 h-8 sm:w-10 sm:h-10 bg-aura-sand/20 text-aura-sand-dark rounded-xl flex items-center justify-center hover:bg-aura-sand/40 transition-premium"
                                                     title="Reduce quantity"
                                                 >
-                                                    <Minus size={18} />
+                                                    <Minus size={16} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         handleConsume(item);
                                                     }}
-                                                    className="w-10 h-10 bg-aura-sage/20 text-aura-sage-dark rounded-xl flex items-center justify-center hover:bg-aura-sage/40 transition-premium"
+                                                    className="w-8 h-8 sm:w-10 sm:h-10 bg-aura-sage/20 text-aura-sage-dark rounded-xl flex items-center justify-center hover:bg-aura-sage/40 transition-premium"
                                                     title="Mark as consumed"
                                                 >
-                                                    <Check size={18} />
+                                                    <Check size={16} />
                                                 </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        addToShoppingList(item);
-                                                    }}
-                                                    className="p-1 text-slate-300 hover:text-primary transition-colors"
-                                                    title="Add to shopping list"
-                                                >
-                                                    <ShoppingCart size={18} />
-                                                </button>
-                                                <button className="text-slate-300 hover:text-primary transition-colors p-1">
-                                                    <MoreVertical size={18} />
-                                                </button>
+                                                <div className="flex flex-col gap-1 sm:hidden">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            addToShoppingList(item);
+                                                        }}
+                                                        className="p-1 text-slate-300 hover:text-primary transition-colors h-full"
+                                                        title="Add to shopping list"
+                                                    >
+                                                        <ShoppingCart size={16} />
+                                                    </button>
+                                                </div>
+                                                <div className="hidden sm:flex items-center gap-1">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            addToShoppingList(item);
+                                                        }}
+                                                        className="p-1 text-slate-300 hover:text-primary transition-colors"
+                                                        title="Add to shopping list"
+                                                    >
+                                                        <ShoppingCart size={18} />
+                                                    </button>
+                                                    <button className="text-slate-300 hover:text-primary transition-colors p-1">
+                                                        <MoreVertical size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     );
@@ -691,7 +705,7 @@ export default function Pantry() {
             </main>
 
             {/* FAB */}
-            <div className="fixed bottom-28 right-6 pointer-events-none z-50">
+            <div className="fixed bottom-28 right-4 sm:right-6 md:right-auto md:left-[calc(50%+180px)] pointer-events-none z-50">
                 <div className="group relative pointer-events-auto">
                     <div className="absolute bottom-20 right-0 flex flex-col gap-3 opacity-0 translate-y-4 pointer-events-none group-focus-within:opacity-100 group-focus-within:translate-y-0 group-focus-within:pointer-events-auto transition-all duration-300">
                         <button
