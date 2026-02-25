@@ -1,23 +1,31 @@
 "use client";
+"use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Camera, Sparkles, Filter, Scan, Search, Bell, Heart, RefreshCcw, Tag, Grid, CheckCircle2, History, AlertCircle } from "lucide-react";
+import { Plus, Camera, Sparkles, Filter, Scan, Search, Bell, Heart, RefreshCcw, Tag, Grid, CheckCircle2, History, AlertCircle, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
     WardrobeItem, OutfitSuggestion, initialWardrobeItems,
     generateOutfits, getItemsWornLastWeek, getUnwornAlternatives,
-    markAsWorn, simulateMirrorScan
+    markAsWorn, simulateMirrorScan, Category
 } from "@/lib/wardrobe";
 import { fetchWeather, WeatherData } from "@/lib/weather";
+import { CameraCapture } from "@/components/CameraCapture";
 
 export default function Wardrobe() {
     const [inventory, setInventory] = useState<WardrobeItem[]>(initialWardrobeItems);
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [outfits, setOutfits] = useState<OutfitSuggestion[]>([]);
 
-    // Scan State
+    // Scan State (The Aura Stylist / Selfie for Wear tracking)
     const [isScanning, setIsScanning] = useState(false);
     const [scannedItems, setScannedItems] = useState<WardrobeItem[] | null>(null);
+
+    // Live AI Camera Integration State (Adding new clothes)
+    const [showAddCamera, setShowAddCamera] = useState(false);
+    const [analyzingImage, setAnalyzingImage] = useState<string | null>(null);
+    const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [manualOverrideItems, setManualOverrideItems] = useState<Partial<WardrobeItem>[] | null>(null);
 
     // Initial Load & Weather
     useEffect(() => {
@@ -34,7 +42,7 @@ export default function Wardrobe() {
     const itemsWornLastWeek = getItemsWornLastWeek(inventory);
     const unwornAlternatives = getUnwornAlternatives(inventory);
 
-    // Handlers
+    // Handlers: Selfie Worn Scan
     const handleScan = async () => {
         setIsScanning(true);
         setScannedItems(null);
@@ -51,6 +59,65 @@ export default function Wardrobe() {
 
     const toggleLike = (id: string) => {
         setInventory(prev => prev.map(item => item.id === id ? { ...item, liked: !item.liked } : item));
+    };
+
+    // Handlers: Live Adding Clothes
+    const handleCaptureNewItem = async (base64Image: string) => {
+        setShowAddCamera(false);
+        setAnalyzingImage(base64Image);
+        setIsAnalyzing(true);
+
+        try {
+            const res = await fetch("/api/wardrobe/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: base64Image })
+            });
+            const data = await res.json();
+
+            if (data.items && data.items.length > 0) {
+                setManualOverrideItems(data.items);
+            } else {
+                // Fallback if API fails or returns empty
+                setManualOverrideItems([{
+                    name: "Unknown Item", category: "Tops", color: "Unknown", warmthLevel: "medium", formality: "casual"
+                }]);
+            }
+        } catch (error) {
+            console.error("Analysis failed", error);
+            setManualOverrideItems([{
+                name: "Error Analysing", category: "Tops", color: "Unknown", warmthLevel: "medium", formality: "casual"
+            }]);
+        } finally {
+            setIsAnalyzing(false);
+        }
+    };
+
+    const handleOverrideChange = (index: number, field: keyof WardrobeItem, value: string) => {
+        if (!manualOverrideItems) return;
+        const newItems = [...manualOverrideItems];
+        newItems[index] = { ...newItems[index], [field]: value };
+        setManualOverrideItems(newItems);
+    };
+
+    const handleConfirmAdd = () => {
+        if (!manualOverrideItems || !analyzingImage) return;
+
+        const newItems: WardrobeItem[] = manualOverrideItems.map((item, i) => ({
+            id: `new- ${Date.now()} -${i} `,
+            name: item.name || "Unnamed Item",
+            category: (item.category as Category) || "Accessories",
+            image: analyzingImage,
+            color: item.color || "Unknown",
+            warmthLevel: (item.warmthLevel as any) || "medium",
+            formality: (item.formality as any) || "casual",
+            wornCount: 0,
+            liked: false
+        }));
+
+        setInventory(prev => [...newItems, ...prev]);
+        setManualOverrideItems(null);
+        setAnalyzingImage(null);
     };
 
     return (
@@ -133,8 +200,8 @@ export default function Wardrobe() {
                     <div className="glass rounded-[3rem] overflow-hidden aspect-[4/5] relative border border-white shadow-xl shadow-slate-200/50 dark:shadow-none group transition-premium">
                         {/* Mock Camera View */}
                         <div className="absolute inset-0 bg-aura-clay/90 flex flex-col items-center justify-center">
-                            <Camera size={64} className={`transition-premium text-primary ${isScanning ? 'animate-pulse scale-110 shadow-[0_0_40px_var(--primary)] rounded-full' : 'opacity-50 group-hover:opacity-80'}`} />
-                            <p className={`text-sm font-bold tracking-tight mt-6 transition-opacity ${isScanning ? 'opacity-100 text-primary' : 'text-aura-sand opacity-50 group-hover:opacity-80'}`}>
+                            <Camera size={64} className={`transition - premium text - primary ${isScanning ? 'animate-pulse scale-110 shadow-[0_0_40px_var(--primary)] rounded-full' : 'opacity-50 group-hover:opacity-80'} `} />
+                            <p className={`text - sm font - bold tracking - tight mt - 6 transition - opacity ${isScanning ? 'opacity-100 text-primary' : 'text-aura-sand opacity-50 group-hover:opacity-80'} `}>
                                 {isScanning ? "Scanning Outfit..." : "Take a Selfie"}
                             </p>
                         </div>
@@ -248,7 +315,7 @@ export default function Wardrobe() {
 
                                         <button
                                             onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
-                                            className={`absolute bottom-2 left-2 p-2 backdrop-blur rounded-full transition-colors shadow-sm border border-aura-sand/20 ${item.liked ? 'bg-white text-aura-accent' : 'bg-white/80 text-slate-400 hover:text-red-500'}`}
+                                            className={`absolute bottom - 2 left - 2 p - 2 backdrop - blur rounded - full transition - colors shadow - sm border border - aura - sand / 20 ${item.liked ? 'bg-white text-aura-accent' : 'bg-white/80 text-slate-400 hover:text-red-500'} `}
                                         >
                                             <Heart size={14} fill={item.liked ? "var(--aura-accent)" : "none"} className={item.liked ? "text-aura-accent" : ""} />
                                         </button>
@@ -269,9 +336,130 @@ export default function Wardrobe() {
             </main>
 
             {/* Floating Add Button */}
-            <button className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center z-50 active:scale-95 transition-premium hover:scale-110">
+            <button
+                onClick={() => setShowAddCamera(true)}
+                className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center z-50 active:scale-95 transition-premium hover:scale-110"
+            >
                 <Plus size={28} />
             </button>
+
+            {/* Live Camera Overlay */}
+            {showAddCamera && (
+                <CameraCapture
+                    onCapture={handleCaptureNewItem}
+                    onClose={() => setShowAddCamera(false)}
+                />
+            )}
+
+            {/* Analyzing Loading Overlay */}
+            {isAnalyzing && (
+                <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center animate-in fade-in duration-300">
+                    <Loader2 size={48} className="text-white animate-spin mb-6" />
+                    <p className="text-white font-bold text-lg">Aura Vision is scanning...</p>
+                    <p className="text-white/60 text-sm mt-2">Identifying colors, categories, and style.</p>
+                </div>
+            )}
+
+            {/* Manual Override Verification Overlay */}
+            {manualOverrideItems && analyzingImage && !isAnalyzing && (
+                <div className="fixed inset-0 z-[120] bg-aura-cream/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col pt-12 animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="px-6 flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold text-foreground tracking-tight">Verify Item</h2>
+                        <button
+                            onClick={() => { setManualOverrideItems(null); setAnalyzingImage(null); }}
+                            className="p-2 bg-slate-200 dark:bg-slate-800 rounded-full text-slate-500"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto px-6 pb-32">
+                        {/* Show captured image at the top */}
+                        <div className="w-full h-48 rounded-3xl overflow-hidden mb-8 shadow-md border border-aura-sand/20">
+                            <img src={analyzingImage} alt="Captured" className="w-full h-full object-cover" />
+                        </div>
+
+                        <div className="space-y-8">
+                            {manualOverrideItems.map((item, index) => (
+                                <div key={index} className="space-y-4 bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-aura-sand/30">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <Sparkles size={16} className="text-primary" />
+                                        <h3 className="text-sm font-bold text-primary uppercase tracking-widest">AI Detection</h3>
+                                    </div>
+
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-400 ml-1">Name</label>
+                                        <input
+                                            value={item.name || ""}
+                                            onChange={(e) => handleOverrideChange(index, "name", e.target.value)}
+                                            className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400 ml-1">Category</label>
+                                            <select
+                                                value={item.category || ""}
+                                                onChange={(e) => handleOverrideChange(index, "category", e.target.value)}
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            >
+                                                <option value="Tops">Tops</option>
+                                                <option value="Bottoms">Bottoms</option>
+                                                <option value="Outerwear">Outerwear</option>
+                                                <option value="Shoes">Shoes</option>
+                                                <option value="Accessories">Accessories</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400 ml-1">Color</label>
+                                            <input
+                                                value={item.color || ""}
+                                                onChange={(e) => handleOverrideChange(index, "color", e.target.value)}
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400 ml-1">Warmth</label>
+                                            <select
+                                                value={item.warmthLevel || ""}
+                                                onChange={(e) => handleOverrideChange(index, "warmthLevel", e.target.value)}
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            >
+                                                <option value="light">Light</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="heavy">Heavy</option>
+                                            </select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-400 ml-1">Formality</label>
+                                            <select
+                                                value={item.formality || ""}
+                                                onChange={(e) => handleOverrideChange(index, "formality", e.target.value)}
+                                                className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                            >
+                                                <option value="casual">Casual</option>
+                                                <option value="business-casual">Business Casual</option>
+                                                <option value="formal">Formal</option>
+                                                <option value="lounge">Lounge</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-aura-cream dark:from-slate-900 via-aura-cream/90 dark:via-slate-900/90 to-transparent">
+                        <button
+                            onClick={handleConfirmAdd}
+                            className="w-full bg-primary text-white py-4.5 rounded-[1.5rem] font-bold flex items-center justify-center gap-2 shadow-xl shadow-primary/20 active:scale-[0.98] transition-premium"
+                        >
+                            <CheckCircle2 size={20} /> Confirm & Save to Wardrobe
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
