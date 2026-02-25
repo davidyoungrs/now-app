@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer, Snowflake } from "lucide-react";
 import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
-import { initialPantryItems, getExpiringSoonItems, getKitchenSinkRecipe, getProactiveSuggestions, getStorageTips } from "@/lib/pantry";
+import { initialPantryItems, getExpiringSoonItems, getKitchenSinkRecipe, getProactiveSuggestions, getStorageTips, calculateSustainabilityMetrics } from "@/lib/pantry";
 
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -174,6 +174,11 @@ export default function Home() {
   const [kitchenSink, setKitchenSink] = useState<any>(null);
   const [proactiveRestock, setProactiveRestock] = useState<string[]>([]);
   const [storageTip, setStorageTip] = useState<any>(null);
+  const [sustainability, setSustainability] = useState(calculateSustainabilityMetrics());
+
+  useEffect(() => {
+    setSustainability(calculateSustainabilityMetrics());
+  }, []);
 
   useEffect(() => {
     setKitchenSink(getKitchenSinkRecipe(expiringItems));
@@ -204,6 +209,37 @@ export default function Home() {
           <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/50">
             "Your {expiringItems[0].name.toLowerCase()} is expiring soon. Why not make a quick {expiringItems[0].name.toLowerCase() === 'milk' ? 'smoothie or latte' : 'pasta dish'} today?"
           </p>
+        </section>
+      )}
+
+      {/* Sustainability & Zero-Waste Streak */}
+      {isSelectedToday && (
+        <section className="bg-gradient-to-br from-primary/20 to-aura-sage/20 border border-primary/20 p-6 rounded-[2.5rem] relative overflow-hidden group transition-premium hover:shadow-xl hover:shadow-primary/10">
+          <div className="absolute -right-8 -top-8 w-32 h-32 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all" />
+          <div className="flex justify-between items-center relative z-10">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-white dark:bg-aura-clay/50 rounded-2xl flex flex-col items-center justify-center shadow-lg border border-primary/10">
+                <span className="text-xl font-bold text-primary leading-none">{sustainability.streak}</span>
+                <span className="text-[8px] font-bold text-slate-400 uppercase">Days</span>
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest animate-pulse">Zero-Waste Streak</p>
+                <h3 className="text-xl font-bold text-foreground">Aura's Champion</h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Impact</p>
+              <p className="text-lg font-bold text-primary">-{sustainability.diverted_kg}kg</p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center gap-2 bg-white/40 dark:bg-black/20 p-3 rounded-2xl border border-white/50">
+            <div className="bg-aura-sage text-aura-sage-dark p-1.5 rounded-lg">
+              <Leaf size={14} />
+            </div>
+            <p className="text-[11px] font-medium text-slate-600 dark:text-slate-300">
+              "You've diverted <span className="text-primary font-bold">{sustainability.diverted_kg}kg</span> of food from waste this month—that's a <span className="text-aura-sage-dark font-bold">{sustainability.improvementPercent}%</span> improvement!"
+            </p>
+          </div>
         </section>
       )}
 

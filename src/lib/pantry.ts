@@ -147,6 +147,77 @@ export const STORAGE_TIPS = [
     }
 ];
 
+// Nutritional Profiles for common items
+export const NUTRITIONAL_PROFILES: Record<string, string[]> = {
+    "spinach": ["Vitamins", "Fiber"],
+    "eggs": ["Protein", "Fats"],
+    "milk": ["Protein", "Calcium"],
+    "avocado": ["Fats", "Fiber"],
+    "bread": ["Carbs", "Fiber"],
+    "pasta": ["Carbs"],
+    "quinoa": ["Protein", "Fiber", "Carbs"],
+    "berries": ["Antioxidants", "Vitamins"],
+    "oats": ["Fiber", "Carbs"],
+    "potatoes": ["Carbs", "Potassium"],
+    "onions": ["Vitamins"]
+};
+
+export const calculateSustainabilityMetrics = () => {
+    // Simulated data based on historical trends
+    const totalConsumed_kg = CONSUMPTION_STATS.reduce((acc, s) => acc + (s.usage * 0.15), 0); // Approx 150g per unit
+    const streak = 14; // Simulated 14 day waste-free streak
+
+    return {
+        diverted_kg: totalConsumed_kg.toFixed(1),
+        streak: streak,
+        improvementPercent: 20
+    };
+};
+
+export const getNutritionalGaps = (items: PantryItem[]) => {
+    const activeItems = items.filter(i => !i.consumed);
+    const presentCategories = new Set<string>();
+
+    activeItems.forEach(item => {
+        const nameLower = item.name.toLowerCase();
+        Object.entries(NUTRITIONAL_PROFILES).forEach(([key, categories]) => {
+            if (nameLower.includes(key)) {
+                categories.forEach(cat => presentCategories.add(cat));
+            }
+        });
+    });
+
+    const essentialCategories = ["Protein", "Fiber", "Vitamins", "Carbs", "Fats"];
+    const gaps = essentialCategories.filter(cat => !presentCategories.has(cat));
+
+    return gaps;
+};
+
+export const getNutritionalAlerts = (gaps: string[]) => {
+    if (gaps.length === 0) return null;
+
+    const categoryToItems: Record<string, string> = {
+        "Fiber": "Quinoa or Oats",
+        "Protein": "Lentils or Chickpeas",
+        "Vitamins": "Kale or Daily Greens",
+        "Carbs": "Whole Grain Pasta",
+        "Fats": "Nuts or Seeds"
+    };
+
+    const firstGap = gaps[0];
+    const suggestion = categoryToItems[firstGap];
+
+    if (suggestion) {
+        return {
+            category: firstGap,
+            message: `Your inventory is currently low on ${firstGap.toLowerCase()}. Should we add ${suggestion} to your list?`
+        };
+    }
+
+    return null;
+};
+
+
 export const getExpiringSoonItems = (items: PantryItem[]) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 2); // Within 48 hours
@@ -244,4 +315,37 @@ export const calculateBestDeals = (shoppingList: ShoppingItem[]) => {
             color: storeName === "FreshMart Central" ? "bg-blue-500" : "bg-red-500"
         };
     }).sort((a, b) => a.total - b.total);
+};
+
+export const parseQuantity = (qtyStr: string) => {
+    // Matches "3 bags", "500ml", "2.5 kg", "1 unit"
+    const match = qtyStr.match(/^([\d.]+)\s*(.*)$/);
+    if (!match) return { value: 1, unit: qtyStr || "unit", isNumeric: false };
+
+    return {
+        value: parseFloat(match[1]),
+        unit: match[2].trim(),
+        isNumeric: true
+    };
+};
+
+export const formatQuantity = (value: number, unit: string) => {
+    if (!unit) return `${value}`;
+    // Basic singular/plural check for units
+    if (value === 1 && unit.endsWith('s') && unit.length > 3) {
+        return `1 ${unit.slice(0, -1)}`;
+    }
+    return `${value} ${unit}`;
+};
+
+export const reduceItemQuantity = (item: PantryItem): Partial<PantryItem> => {
+    const { value, unit, isNumeric } = parseQuantity(item.qty);
+
+    if (!isNumeric || value <= 1) {
+        return { consumed: true };
+    }
+
+    return {
+        qty: formatQuantity(value - 1, unit)
+    };
 };

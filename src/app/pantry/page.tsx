@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2, ChevronRight, Check, X, Package, ShoppingCart, Calendar, Tag, Trash2, Leaf, Wind, Snowflake, Droplets } from "lucide-react";
+import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, Minus, ScanLine, Edit2, ChevronRight, Check, X, Package, ShoppingCart, Calendar, Tag, Trash2, Leaf, Wind, Snowflake, Droplets } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import {
     initialPantryItems,
@@ -12,7 +12,11 @@ import {
     getProactiveSuggestions,
     getKitchenSinkRecipe,
     getExpiringSoonItems,
-    getStorageTips
+    getStorageTips,
+    reduceItemQuantity,
+    getNutritionalGaps,
+    getNutritionalAlerts,
+    NUTRITIONAL_PROFILES
 } from "@/lib/pantry";
 
 const UsageHeatmap = () => {
@@ -56,6 +60,41 @@ const UsageHeatmap = () => {
     );
 };
 
+const HealthBalance = ({ items }: { items: PantryItem[] }) => {
+    const presentCategories = new Set<string>();
+    items.filter(i => !i.consumed).forEach(item => {
+        const nameLower = item.name.toLowerCase();
+        Object.entries(NUTRITIONAL_PROFILES).forEach(([key, categories]) => {
+            if (nameLower.includes(key)) {
+                categories.forEach(cat => presentCategories.add(cat));
+            }
+        });
+    });
+
+    const essentialCategories = ["Protein", "Fiber", "Vitamins", "Carbs", "Fats"];
+
+    return (
+        <div className="space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Health Balance</h2>
+            <div className="bg-white dark:bg-aura-clay/40 rounded-[2.5rem] p-6 border border-aura-sand/10 shadow-sm">
+                <div className="grid grid-cols-5 gap-2">
+                    {essentialCategories.map((cat, i) => {
+                        const isPresent = presentCategories.has(cat);
+                        return (
+                            <div key={i} className="flex flex-col items-center gap-3">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-premium ${isPresent ? "bg-primary text-white shadow-lg" : "bg-aura-sand/20 text-slate-300"}`}>
+                                    {cat[0]}
+                                </div>
+                                <span className={`text-[8px] font-bold uppercase tracking-tighter ${isPresent ? "text-primary" : "text-slate-400"}`}>{cat}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function Pantry() {
     const [activeTab, setActiveTab] = useState("Pantry");
     const [items, setItems] = useState<PantryItem[]>(initialPantryItems);
@@ -65,7 +104,7 @@ export default function Pantry() {
     const [showManualEntry, setShowManualEntry] = useState(false);
     const [restockSuggestion, setRestockSuggestion] = useState<PantryItem | null>(null);
     const [proactiveSugg, setProactiveSugg] = useState<string[]>([]);
-    const [storageTips, setStorageTips] = useState<any[]>([]);
+    const [auraStorageTips, setAuraStorageTips] = useState<any[]>([]);
 
     // Form State
     const [newItem, setNewItem] = useState({
@@ -75,12 +114,16 @@ export default function Pantry() {
         category: "Pantry" as const
     });
 
+    const [nutritionalAlert, setNutritionalAlert] = useState<any>(null);
+
     useEffect(() => {
         setProactiveSugg(getProactiveSuggestions());
     }, []);
 
     useEffect(() => {
-        setStorageTips(getStorageTips(items));
+        setAuraStorageTips(getStorageTips(items));
+        const gaps = getNutritionalGaps(items);
+        setNutritionalAlert(getNutritionalAlerts(gaps));
     }, [items]);
 
     const kitchenSinkRecipe = useMemo(() => {
@@ -94,6 +137,18 @@ export default function Pantry() {
         ));
         setRestockSuggestion(item);
         setTimeout(() => setRestockSuggestion(null), 10000);
+    };
+
+    const handleReduce = (item: PantryItem) => {
+        const update = reduceItemQuantity(item);
+        setItems(prev => prev.map(i =>
+            i.id === item.id ? { ...i, ...update } : i
+        ));
+
+        if (update.consumed) {
+            setRestockSuggestion(item);
+            setTimeout(() => setRestockSuggestion(null), 10000);
+        }
     };
 
     const handleAddManual = () => {
@@ -471,18 +526,35 @@ export default function Pantry() {
                                                 <ChevronRight size={20} className="text-aura-sage-dark opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                                             </div>
                                         )}
+
+                                        {/* Nutritional Gap Alert */}
+                                        {nutritionalAlert && (
+                                            <div className="bg-aura-sand/15 border border-aura-sand/30 rounded-[2.5rem] p-6 flex items-center justify-between group transition-premium hover:bg-aura-sand/20 cursor-pointer">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-primary/10 text-primary p-3.5 rounded-2xl shadow-lg transition-premium group-hover:bg-primary group-hover:text-white">
+                                                        <Tag size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Nutrition Gap</p>
+                                                        <p className="text-xs font-bold text-foreground leading-tight">{nutritionalAlert.message}</p>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight size={16} className="text-primary opacity-40 group-hover:opacity-100" />
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
 
+
                                 {/* Storage Science Section */}
-                                {storageTips.length > 0 && (
+                                {auraStorageTips.length > 0 && (
                                     <section className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Storage Science</h2>
                                             <span className="text-[8px] font-bold text-aura-sage-dark uppercase">Aura Tips</span>
                                         </div>
                                         <div className="space-y-3">
-                                            {storageTips.map((tip, i) => {
+                                            {auraStorageTips.map((tip, i) => {
                                                 const Icon = ({
                                                     Leaf,
                                                     Wind,
@@ -511,6 +583,7 @@ export default function Pantry() {
                                 )}
 
                                 <UsageHeatmap />
+                                <HealthBalance items={items} />
                             </div>
                         )}
 
@@ -561,6 +634,16 @@ export default function Pantry() {
                                                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">QTY</p>
                                                     <p className="font-bold text-foreground">{item.qty}</p>
                                                 </div>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleReduce(item);
+                                                    }}
+                                                    className="w-10 h-10 bg-aura-sand/20 text-aura-sand-dark rounded-xl flex items-center justify-center hover:bg-aura-sand/40 transition-premium"
+                                                    title="Reduce quantity"
+                                                >
+                                                    <Minus size={18} />
+                                                </button>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation();
