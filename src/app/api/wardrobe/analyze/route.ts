@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Gemini SDK
-// Note: Requires GEMINI_API_KEY to be set in .env.local
-const ai = new GoogleGenAI({});
-
 export async function POST(req: Request) {
     try {
+        // Initialize Gemini SDK here to avoid errors during static generation
+        // Note: Requires GEMINI_API_KEY to be set in .env.local
+        const ai = new GoogleGenAI({});
+
         const body = await req.json();
         const { image } = body; // expecting a base64 string: "data:image/jpeg;base64,..."
 
