@@ -20,6 +20,7 @@ export default function Wardrobe() {
     // Scan State (The Aura Stylist / Selfie for Wear tracking)
     const [isScanning, setIsScanning] = useState(false);
     const [scannedItems, setScannedItems] = useState<WardrobeItem[] | null>(null);
+    const [showScanCamera, setShowScanCamera] = useState(false);
 
     // Live AI Camera Integration State (Adding new clothes)
     const [showAddCamera, setShowAddCamera] = useState(false);
@@ -42,13 +43,32 @@ export default function Wardrobe() {
     const itemsWornLastWeek = getItemsWornLastWeek(inventory);
     const unwornAlternatives = getUnwornAlternatives(inventory);
 
-    // Handlers: Selfie Worn Scan
-    const handleScan = async () => {
+    const handleScanCapture = async (base64Image: string) => {
+        setShowScanCamera(false);
         setIsScanning(true);
         setScannedItems(null);
-        const results = await simulateMirrorScan(inventory);
-        setScannedItems(results);
-        setIsScanning(false);
+
+        try {
+            const res = await fetch("/api/wardrobe/scan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: base64Image, inventory })
+            });
+            const data = await res.json();
+
+            if (data.detectedIds) {
+                // Map the returned IDs back to the actual inventory items
+                const detectedItems = inventory.filter(item => data.detectedIds.includes(item.id));
+                setScannedItems(detectedItems);
+            } else {
+                setScannedItems([]);
+            }
+        } catch (error) {
+            console.error("Scan failed", error);
+            setScannedItems([]);
+        } finally {
+            setIsScanning(false);
+        }
     };
 
     const handleSaveWorn = () => {
@@ -216,7 +236,7 @@ export default function Wardrobe() {
 
                         {!scannedItems && !isScanning && (
                             <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full px-10">
-                                <button onClick={handleScan} className="w-full bg-primary text-white py-4 px-4 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-premium group-hover:translate-y-[-4px]">
+                                <button onClick={() => setShowScanCamera(true)} className="w-full bg-primary text-white py-4 px-4 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-premium group-hover:translate-y-[-4px]">
                                     <Scan size={20} /> Capture What I'm Wearing
                                 </button>
                             </div>
@@ -348,6 +368,13 @@ export default function Wardrobe() {
                 <CameraCapture
                     onCapture={handleCaptureNewItem}
                     onClose={() => setShowAddCamera(false)}
+                />
+            )}
+
+            {showScanCamera && (
+                <CameraCapture
+                    onCapture={handleScanCapture}
+                    onClose={() => setShowScanCamera(false)}
                 />
             )}
 
