@@ -277,7 +277,7 @@ export default function Pantry() {
                                     >
                                         <option value="Pantry">Pantry</option>
                                         <option value="Fridge">Fridge</option>
-                                        <option value="Spices">Spices</option>
+                                        <option value="Countertop">Countertop</option>
                                     </select>
                                 </div>
                             </div>
@@ -476,7 +476,7 @@ export default function Pantry() {
                 ) : (
                     <div className="space-y-8">
                         {/* Insights Section (Heatmap + Alerts) */}
-                        {activeTab === "Inventory" && (
+                        {activeTab === "Pantry" && (
                             <div className="space-y-8 animate-in fade-in duration-500">
                                 <section className="space-y-4">
                                     <div className="flex items-center justify-between">
@@ -582,25 +582,27 @@ export default function Pantry() {
                                     </section>
                                 )}
 
-                                <UsageHeatmap />
-                                <HealthBalance items={items} />
                             </div>
                         )}
 
-                        {/* Old Usage Analytics Preview (removed in favor of heatmap in Inventory tab) */}
-                        {activeTab === "Pantry" && (
-                            <section className="bg-aura-sand/10 border border-aura-sand/20 rounded-[2.5rem] p-6 flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="bg-primary text-white p-3.5 rounded-2xl shadow-lg shadow-primary/20">
-                                        <PiggyBank size={24} />
+                        {activeTab === "Inventory" && (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <UsageHeatmap />
+                                <HealthBalance items={items} />
+
+                                <section className="bg-aura-sand/10 border border-aura-sand/20 rounded-[2.5rem] p-6 flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-primary text-white p-3.5 rounded-2xl shadow-lg shadow-primary/20">
+                                            <PiggyBank size={24} />
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Sustainability Score</p>
+                                            <p className="text-xl font-bold text-foreground">92% Efficient</p>
+                                            <p className="text-xs text-slate-500 font-medium italic">"You're wasting significantly less this month!"</p>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Sustainability Score</p>
-                                        <p className="text-xl font-bold text-foreground">92% Efficient</p>
-                                        <p className="text-xs text-slate-500 font-medium italic">"You're wasting significantly less this month!"</p>
-                                    </div>
-                                </div>
-                            </section>
+                                </section>
+                            </div>
                         )}
 
                         {/* Pantry Items */}
@@ -611,8 +613,16 @@ export default function Pantry() {
                             </div>
 
                             <div className="space-y-3">
-                                {filteredItems.filter(i => activeTab === "Pantry" || i.category === activeTab).map((item) => {
+                                {filteredItems.filter(i => (activeTab === "Pantry" && (i.category === "Fridge" || i.category === "Countertop")) || (activeTab === "Inventory" && i.category === "Pantry")).map((item) => {
                                     const expiryInfo = getExpiryLabel(item.expiryDate);
+                                    const getCategoryColor = (cat: string) => {
+                                        switch (cat) {
+                                            case "Fridge": return "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800";
+                                            case "Countertop": return "bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800";
+                                            case "Pantry": return "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800";
+                                            default: return "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+                                        }
+                                    };
                                     return (
                                         <div key={item.id} className="glass rounded-[2rem] p-4 flex items-center gap-4 group cursor-pointer transition-premium hover:translate-x-1 active:scale-[0.98] border border-white/50">
                                             <div className="w-14 h-14 bg-aura-sand/20 dark:bg-aura-clay/50 rounded-2xl overflow-hidden shadow-inner border border-aura-sand/10 relative">
@@ -627,6 +637,9 @@ export default function Pantry() {
                                                     <p className={`text-[10px] font-bold uppercase tracking-widest ${expiryInfo.urgency === 'today' ? 'text-orange-500' : 'text-slate-400'}`}>
                                                         {expiryInfo.label}
                                                     </p>
+                                                    <span className={`ml-2 text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border ${getCategoryColor(item.category)}`}>
+                                                        {item.category}
+                                                    </span>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">

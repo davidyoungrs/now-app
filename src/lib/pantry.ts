@@ -4,7 +4,7 @@ export interface PantryItem {
     expiryDate: string; // ISO format YYYY-MM-DD
     qty: string;
     image: string;
-    category: "Pantry" | "Fridge" | "Spices";
+    category: "Pantry" | "Fridge" | "Countertop";
     consumed?: boolean;
 }
 
@@ -32,7 +32,7 @@ export const initialPantryItems: PantryItem[] = [
         expiryDate: new Date(Date.now() + 172800000).toISOString().split('T')[0], // Day after tomorrow
         qty: "2 units",
         image: "https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=100&h=100&fit=crop",
-        category: "Pantry"
+        category: "Countertop"
     },
     {
         id: "5",
@@ -56,7 +56,7 @@ export const initialPantryItems: PantryItem[] = [
         expiryDate: new Date(Date.now() + 864000000).toISOString().split('T')[0], // 10 days
         qty: "1 kg",
         image: "https://images.unsplash.com/photo-1508747703725-719777637510?w=100&h=100&fit=crop",
-        category: "Pantry"
+        category: "Countertop"
     },
     {
         id: "8",
