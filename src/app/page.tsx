@@ -168,8 +168,65 @@ export default function Home() {
   const displayWeather = getDisplayWeather();
   const isSelectedToday = selectedDate.toDateString() === new Date().toDateString();
 
+  const [showForecast, setShowForecast] = useState(false);
+
   return (
     <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      {/* Forecast Modal */}
+      {showForecast && (
+        <div
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300"
+          onClick={() => setShowForecast(false)}
+        >
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-lg bg-white dark:bg-aura-clay/90 backdrop-blur-xl rounded-[3rem] shadow-2xl border border-white/20 p-8 space-y-8 animate-in slide-in-from-bottom-10 duration-500"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tighter text-foreground">5-Day Forecast</h2>
+                <p className="text-sm text-slate-500 font-medium">{locationName}</p>
+              </div>
+              <button
+                onClick={() => setShowForecast(false)}
+                className="w-10 h-10 bg-aura-sand/20 dark:bg-aura-clay rounded-full flex items-center justify-center text-slate-500 hover:text-primary transition-colors"
+              >
+                <ChevronRight className="rotate-90" size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {weather?.forecast.slice(0, 5).map((f, i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-3xl bg-aura-sand/10 dark:bg-white/5 border border-white/10 group transition-premium hover:bg-aura-sand/20">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-white dark:bg-aura-clay rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-sm">
+                      {getWeatherIcon(f.weatherCode)}
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-foreground">
+                        {new Date(f.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                      </p>
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest">{f.condition}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold tracking-tighter text-foreground">{f.tempMax}°C</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setShowForecast(false)}
+              className="w-full py-4 bg-primary text-white font-bold rounded-2xl shadow-lg shadow-primary/20 transition-premium hover:scale-[1.02] active:scale-95"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="flex justify-between items-start">
         <div className="space-y-1">
@@ -219,7 +276,10 @@ export default function Home() {
       </section>
 
       {/* Weather & Routine Notification */}
-      <section className="bg-aura-sage/10 border border-aura-sage/20 p-6 rounded-[2.5rem] space-y-4 cursor-pointer transition-premium hover:bg-aura-sage/15 active:scale-[0.98]">
+      <section
+        onClick={() => setShowForecast(true)}
+        className="bg-aura-sage/10 border border-aura-sage/20 p-6 rounded-[2.5rem] space-y-4 cursor-pointer transition-premium hover:bg-aura-sage/15 active:scale-[0.98]"
+      >
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 bg-white dark:bg-aura-clay/50 rounded-2xl flex items-center justify-center text-primary shadow-sm">
