@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer } from "lucide-react";
 import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
+import { initialPantryItems, getExpiringSoonItems } from "@/lib/pantry";
 
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -169,9 +170,33 @@ export default function Home() {
   const isSelectedToday = selectedDate.toDateString() === new Date().toDateString();
 
   const [showForecast, setShowForecast] = useState(false);
+  const [expiringItems, setExpiringItems] = useState(getExpiringSoonItems(initialPantryItems));
 
   return (
     <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
+      {/* Waste Zero Notification */}
+      {expiringItems.length > 0 && isSelectedToday && (
+        <section className="bg-aura-sand/15 border border-aura-sand/30 p-6 rounded-[2.5rem] space-y-4 animate-in fade-in zoom-in duration-700">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
+                <Leaf size={24} />
+              </div>
+              <div>
+                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Waste Zero</p>
+                <h3 className="text-xl font-bold tracking-tight text-foreground">{expiringItems[0].name} Needs Using</h3>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Minimal Living</p>
+            </div>
+          </div>
+          <p className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed bg-white/50 dark:bg-white/5 p-4 rounded-2xl border border-white/50">
+            "Your {expiringItems[0].name.toLowerCase()} is expiring soon. Why not make a quick {expiringItems[0].name.toLowerCase() === 'milk' ? 'smoothie or latte' : 'pasta dish'} today?"
+          </p>
+        </section>
+      )}
+
       {/* Forecast Modal */}
       {showForecast && (
         <div
