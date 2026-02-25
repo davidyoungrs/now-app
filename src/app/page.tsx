@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer } from "lucide-react";
 import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
-import { initialPantryItems, getExpiringSoonItems } from "@/lib/pantry";
+import { initialPantryItems, getExpiringSoonItems, getKitchenSinkRecipe, getProactiveSuggestions } from "@/lib/pantry";
 
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -171,6 +171,13 @@ export default function Home() {
 
   const [showForecast, setShowForecast] = useState(false);
   const [expiringItems, setExpiringItems] = useState(getExpiringSoonItems(initialPantryItems));
+  const [kitchenSink, setKitchenSink] = useState<any>(null);
+  const [proactiveRestock, setProactiveRestock] = useState<string[]>([]);
+
+  useEffect(() => {
+    setKitchenSink(getKitchenSinkRecipe(expiringItems));
+    setProactiveRestock(getProactiveSuggestions());
+  }, [expiringItems]);
 
   return (
     <div className="px-6 pt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32">
@@ -365,22 +372,67 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Proactive Aura Insights */}
+      {(kitchenSink || proactiveRestock.length > 0) && isSelectedToday && (
+        <section className="space-y-4">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Proactive Insights</h2>
+          <div className="space-y-4">
+            {kitchenSink && (
+              <div className="bg-aura-sage/10 border border-aura-sage/20 rounded-[2rem] p-5 flex items-center justify-between group transition-premium hover:bg-aura-sage/15 cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="bg-aura-sage text-aura-sage-dark p-3 rounded-xl shadow-md">
+                    <Leaf size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-aura-sage-dark">Multi-Item Solution</p>
+                    <p className="text-sm font-bold text-foreground">{kitchenSink.name}</p>
+                    <p className="text-[10px] text-slate-500 max-w-[200px]">Use up your {kitchenSink.items.join(', ')}.</p>
+                  </div>
+                </div>
+                <ChevronRight size={16} className="text-aura-sage-dark opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              </div>
+            )}
+
+            {proactiveRestock.length > 0 && (
+              <div className="bg-primary/5 border border-primary/20 rounded-[2rem] p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-primary text-white p-2.5 rounded-xl shadow-md">
+                    <AlertCircle size={20} />
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Habitual Restock</p>
+                    <p className="text-sm font-bold text-foreground">Aura predicts these for today:</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {proactiveRestock.map((item, i) => (
+                    <span key={i} className="px-3 py-1 bg-white dark:bg-aura-clay/50 border border-primary/10 rounded-full text-[10px] font-bold text-primary">
+                      + {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Expiring Soon */}
       <section className="space-y-4">
         <div className="flex justify-between items-end">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Food Inventory</h2>
-          <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">See Full Pantry</button>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Inventory Status</h2>
+          <button className="text-xs font-bold text-primary transition-premium hover:opacity-70">Pantry Detail</button>
         </div>
         <div className="grid grid-cols-2 gap-4">
-          {alerts.map((item, idx) => (
+          {expiringItems.slice(0, 2).map((item, idx) => (
             <div key={idx} className="glass p-5 rounded-3xl flex flex-col items-center text-center space-y-3 cursor-pointer transition-premium hover:scale-[1.02] active:scale-95 border border-white/50">
-              <div className={`w-14 h-14 ${item.bgColor} rounded-full flex items-center justify-center text-primary shadow-inner`}>
-                {item.icon}
+              <div className={`w-14 h-14 bg-primary/5 rounded-full flex items-center justify-center text-primary shadow-inner`}>
+                <Leaf size={24} />
               </div>
               <div className="space-y-1">
                 <h3 className="font-bold text-foreground">{item.name}</h3>
-                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full tracking-widest ${item.bgColor} ${item.color}`}>
-                  Expire {item.status}
+                <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full tracking-widest bg-red-50 dark:bg-red-900/10 text-red-500`}>
+                  Today
                 </span>
               </div>
             </div>

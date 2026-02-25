@@ -1,8 +1,59 @@
 "use client";
 
 import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2, ChevronRight, Check, X, Package, ShoppingCart, Calendar, Tag, Trash2 } from "lucide-react";
-import { useState, useMemo } from "react";
-import { initialPantryItems, getExpiryLabel, PantryItem, ShoppingItem, calculateBestDeals } from "@/lib/pantry";
+import { useState, useMemo, useEffect } from "react";
+import {
+    initialPantryItems,
+    getExpiryLabel,
+    PantryItem,
+    ShoppingItem,
+    calculateBestDeals,
+    CONSUMPTION_STATS,
+    getProactiveSuggestions,
+    getKitchenSinkRecipe,
+    getExpiringSoonItems
+} from "@/lib/pantry";
+
+const UsageHeatmap = () => {
+    const maxVal = Math.max(...CONSUMPTION_STATS.map(s => s.usage + s.waste));
+
+    return (
+        <div className="space-y-4">
+            <div className="flex justify-between items-end">
+                <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Consumption Heatmap</h2>
+                <div className="flex gap-4">
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-primary" />
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Usage</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <div className="w-2 h-2 rounded-full bg-aura-sand-dark" />
+                        <span className="text-[8px] font-bold text-slate-500 uppercase">Waste</span>
+                    </div>
+                </div>
+            </div>
+            <div className="bg-white dark:bg-aura-clay/40 rounded-[2.5rem] p-6 border border-aura-sand/10 shadow-sm">
+                <div className="flex items-baseline justify-between h-32 gap-1 px-2">
+                    {CONSUMPTION_STATS.map((stat, i) => (
+                        <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                            <div className="w-full relative flex flex-col-reverse justify-end gap-0.5 h-24">
+                                <div
+                                    className="w-full bg-aura-sand/20 rounded-t-lg transition-premium group-hover:bg-aura-sand/30"
+                                    style={{ height: `${(stat.waste / maxVal) * 100}%` }}
+                                />
+                                <div
+                                    className="w-full bg-primary rounded-b-lg shadow-sm transition-premium group-hover:scale-y-105"
+                                    style={{ height: `${(stat.usage / maxVal) * 100}%` }}
+                                />
+                            </div>
+                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">{stat.month}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function Pantry() {
     const [activeTab, setActiveTab] = useState("Pantry");
@@ -12,6 +63,7 @@ export default function Pantry() {
     const [isScanning, setIsScanning] = useState(false);
     const [showManualEntry, setShowManualEntry] = useState(false);
     const [restockSuggestion, setRestockSuggestion] = useState<PantryItem | null>(null);
+    const [proactiveSugg, setProactiveSugg] = useState<string[]>([]);
 
     // Form State
     const [newItem, setNewItem] = useState({
@@ -20,6 +72,15 @@ export default function Pantry() {
         expiryDate: new Date().toISOString().split('T')[0],
         category: "Pantry" as const
     });
+
+    useEffect(() => {
+        setProactiveSugg(getProactiveSuggestions());
+    }, []);
+
+    const kitchenSinkRecipe = useMemo(() => {
+        const expiring = getExpiringSoonItems(items);
+        return getKitchenSinkRecipe(expiring);
+    }, [items]);
 
     const handleConsume = (item: PantryItem) => {
         setItems(prev => prev.map(i =>
@@ -353,19 +414,79 @@ export default function Pantry() {
                     </div>
                 ) : (
                     <div className="space-y-8">
-                        {/* Usage Analytics Preview */}
-                        <section className="bg-aura-sage/10 border border-aura-sage/20 rounded-[2.5rem] p-6 flex items-center justify-between cursor-pointer group transition-premium hover:bg-aura-sage/15">
-                            <div className="flex items-center gap-4">
-                                <div className="bg-primary text-white p-3.5 rounded-2xl shadow-lg shadow-primary/20 transition-premium group-hover:rotate-12">
-                                    <PiggyBank size={24} />
-                                </div>
-                                <div>
-                                    <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Consumption Analytics</p>
-                                    <p className="text-xl font-bold text-foreground">Suggesting Milk</p>
-                                    <p className="text-xs text-slate-500 font-medium italic">"You usually run out of milk on Thursdays."</p>
-                                </div>
+                        {/* Insights Section (Heatmap + Alerts) */}
+                        {activeTab === "Inventory" && (
+                            <div className="space-y-8 animate-in fade-in duration-500">
+                                <section className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Proactive Aura</h2>
+                                        <span className="text-[8px] font-bold text-primary uppercase">Intuitive Logic</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {/* Restock Alert */}
+                                        {proactiveSugg.length > 0 && (
+                                            <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-[2.5rem] p-6 flex flex-col gap-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-primary text-white p-3 rounded-2xl">
+                                                        <AlertTriangle size={20} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs font-bold text-foreground">Habitual Restock Alert</p>
+                                                        <p className="text-[10px] text-slate-500">Today is {new Date().toLocaleDateString('en-US', { weekday: 'long' })}, you usually buy these:</p>
+                                                    </div>
+                                                </div>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {proactiveSugg.map((s, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => addToShoppingList({ name: s, qty: "1 unit", category: "Habit" })}
+                                                            className="px-3 py-1.5 bg-white dark:bg-aura-clay/50 border border-primary/10 rounded-full text-[10px] font-bold text-primary hover:bg-primary hover:text-white transition-all"
+                                                        >
+                                                            + {s}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Multi-Item Recipe Suggestion */}
+                                        {kitchenSinkRecipe && (
+                                            <div className="bg-aura-sage/10 border border-aura-sage/20 rounded-[2.5rem] p-6 flex items-center justify-between group transition-premium hover:bg-aura-sage/15 cursor-pointer">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="bg-aura-sage text-aura-sage-dark p-3.5 rounded-2xl shadow-lg transition-premium group-hover:rotate-12">
+                                                        <Package size={24} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[10px] uppercase font-bold tracking-widest text-aura-sage-dark">Multi-Item Solution</p>
+                                                        <p className="text-lg font-bold text-foreground">{kitchenSinkRecipe.name}</p>
+                                                        <p className="text-[10px] text-slate-500 italic max-w-[200px] leading-tight">Clear out your expiring {kitchenSinkRecipe.items.join(', ')} with this.</p>
+                                                    </div>
+                                                </div>
+                                                <ChevronRight size={20} className="text-aura-sage-dark opacity-40 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </section>
+
+                                <UsageHeatmap />
                             </div>
-                        </section>
+                        )}
+
+                        {/* Old Usage Analytics Preview (removed in favor of heatmap in Inventory tab) */}
+                        {activeTab === "Pantry" && (
+                            <section className="bg-aura-sand/10 border border-aura-sand/20 rounded-[2.5rem] p-6 flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="bg-primary text-white p-3.5 rounded-2xl shadow-lg shadow-primary/20">
+                                        <PiggyBank size={24} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Sustainability Score</p>
+                                        <p className="text-xl font-bold text-foreground">92% Efficient</p>
+                                        <p className="text-xs text-slate-500 font-medium italic">"You're wasting significantly less this month!"</p>
+                                    </div>
+                                </div>
+                            </section>
+                        )}
 
                         {/* Pantry Items */}
                         <section className="space-y-4">
