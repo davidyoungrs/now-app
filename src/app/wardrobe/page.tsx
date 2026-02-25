@@ -1,19 +1,61 @@
 "use client";
 
-import { Shirt, Trash2, ExternalLink, Plus, Camera, Sparkles, Filter, ChevronRight, Scan, Search, Bell, Heart, RefreshCcw, Tag, Grid } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Plus, Camera, Sparkles, Filter, Scan, Search, Bell, Heart, RefreshCcw, Tag, Grid, CheckCircle2, History, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    WardrobeItem, OutfitSuggestion, initialWardrobeItems,
+    generateOutfits, getItemsWornLastWeek, getUnwornAlternatives,
+    markAsWorn, simulateMirrorScan
+} from "@/lib/wardrobe";
+import { fetchWeather, WeatherData } from "@/lib/weather";
 
 export default function Wardrobe() {
-    const closetItems = [
-        { name: "Vintage Plaid Mini", worn: "12x", last: "Oct 12", category: "Skirts", image: "https://images.unsplash.com/photo-1577900232427-18219b9166a0?w=200&h=250&fit=crop", liked: true },
-        { name: "Basics Organic Tee", worn: "34x", last: "Yesterday", category: "Tops", image: "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=200&h=250&fit=crop" },
-        { name: "Chelsea Leather Boots", worn: "21x", last: "3 days ago", category: "Shoes", image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=200&h=250&fit=crop" },
-        { name: "Parisian Linen Blazer", worn: "8x", last: "Oct 28", category: "Outerwear", image: "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=200&h=250&fit=crop", liked: true },
-    ];
+    const [inventory, setInventory] = useState<WardrobeItem[]>(initialWardrobeItems);
+    const [weather, setWeather] = useState<WeatherData | null>(null);
+    const [outfits, setOutfits] = useState<OutfitSuggestion[]>([]);
+
+    // Scan State
+    const [isScanning, setIsScanning] = useState(false);
+    const [scannedItems, setScannedItems] = useState<WardrobeItem[] | null>(null);
+
+    // Initial Load & Weather
+    useEffect(() => {
+        // Fetch weather (mocking coordinates for NY or relying on existing)
+        fetchWeather(40.7128, -74.0060).then(data => {
+            setWeather(data);
+            setOutfits(generateOutfits(initialWardrobeItems, data.temp));
+        }).catch(() => {
+            setOutfits(generateOutfits(initialWardrobeItems, 15));
+        });
+    }, []);
+
+    // Calculate Analytics
+    const itemsWornLastWeek = getItemsWornLastWeek(inventory);
+    const unwornAlternatives = getUnwornAlternatives(inventory);
+
+    // Handlers
+    const handleScan = async () => {
+        setIsScanning(true);
+        setScannedItems(null);
+        const results = await simulateMirrorScan(inventory);
+        setScannedItems(results);
+        setIsScanning(false);
+    };
+
+    const handleSaveWorn = () => {
+        if (!scannedItems) return;
+        setInventory(prev => markAsWorn(scannedItems, prev));
+        setScannedItems(null);
+    };
+
+    const toggleLike = (id: string) => {
+        setInventory(prev => prev.map(item => item.id === id ? { ...item, liked: !item.liked } : item));
+    };
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen pb-32">
+            {/* Header */}
             <header className="px-6 pt-12 pb-4 flex justify-between items-center bg-aura-cream/80 dark:bg-aura-clay/80 backdrop-blur-md sticky top-0 z-30 border-b border-aura-sand/20">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
@@ -32,124 +74,204 @@ export default function Wardrobe() {
                 </div>
             </header>
 
-            <main className="px-6 pb-32 space-y-10 animate-in fade-in duration-700">
+            <main className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 mt-6">
 
-                {/* Mirror Scan UI - Refined for Aura */}
-                <section className="space-y-4">
-                    <div className="flex justify-between items-end">
-                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Mirror Scan</h2>
-                        <div className="flex items-center gap-1 text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
-                            <Sparkles size={10} />
-                            <span>Gemini AI Active</span>
-                        </div>
-                    </div>
-                    <div className="glass rounded-[3rem] overflow-hidden aspect-[4/5] relative border border-white shadow-2xl group cursor-pointer">
-                        {/* Mock Camera View */}
-                        <div className="absolute inset-0 bg-aura-clay/90 flex items-center justify-center">
-                            <div className="text-aura-sand flex flex-col items-center gap-4 opacity-50 group-hover:opacity-80 transition-opacity">
-                                <Camera size={64} className="group-hover:scale-110 transition-premium text-primary" />
-                                <p className="text-sm font-medium tracking-tight">Step into the Aura Mirror</p>
-                            </div>
-                        </div>
-
-                        {/* Scanning Overlay */}
-                        <div className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity overflow-hidden">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-primary/40 shadow-[0_0_20px_var(--primary)] animate-scan" />
-                            <div className="absolute inset-0 bg-gradient-to-b from-primary/5 via-transparent to-primary/5" />
-                        </div>
-
-                        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full px-10">
-                            <button className="w-full bg-primary text-white py-4.5 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-premium group-hover:translate-y-[-4px]">
-                                <Scan size={20} className="animate-pulse" />
-                                Capture Outfit
-                            </button>
+                {/* Wear Analytics */}
+                <section className="px-6">
+                    <div className="bg-primary/10 border border-primary/20 rounded-3xl p-5 flex items-center justify-between shadow-sm">
+                        <div>
+                            <p className="text-[10px] font-bold text-primary uppercase tracking-widest mb-1 flex items-center gap-1"><History size={12} /> Wear Analytics</p>
+                            <h3 className="text-2xl font-bold text-foreground tracking-tight">{itemsWornLastWeek} <span className="text-xs font-medium text-slate-500 uppercase tracking-wider">items worn this week</span></h3>
                         </div>
                     </div>
                 </section>
 
-                {/* AI Stylist Recommendations */}
+                {/* Aura Stylist Details */}
                 <section className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Weekly Stylist</h2>
-                        <button className="flex items-center gap-1.5 text-xs font-bold text-primary transition-premium hover:opacity-70">
-                            <RefreshCcw size={14} /> Re-plan Week
+                    <div className="flex justify-between items-center px-6">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Today's Outfit Options</h2>
+                        <button
+                            onClick={() => setOutfits(generateOutfits(inventory, weather?.temp ?? 15))}
+                            className="flex items-center gap-1.5 text-xs font-bold text-primary transition-premium hover:opacity-70 bg-primary/10 px-3 py-1.5 rounded-full"
+                        >
+                            <RefreshCcw size={12} /> Re-plan
                         </button>
                     </div>
-                    <div className="bg-aura-sage/10 border border-aura-sage/20 p-8 rounded-[3rem] space-y-6">
-                        <div className="text-center space-y-1">
-                            <p className="text-[10px] uppercase font-bold tracking-widest text-primary">Next 3 Days</p>
-                            <h3 className="text-xl font-bold text-foreground italic">"Meetings & Rain"</h3>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            {closetItems.slice(0, 4).map((item, idx) => (
-                                <div key={idx} className="aspect-[4/5] bg-white dark:bg-aura-clay/50 rounded-2xl overflow-hidden shadow-sm border border-aura-sand/20 group cursor-pointer transition-premium hover:scale-105 active:scale-95">
-                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-premium group-hover:scale-110" />
-                                </div>
-                            ))}
-                        </div>
-                        <button className="w-full bg-foreground text-white dark:bg-primary dark:text-white py-4.5 rounded-[1.5rem] font-bold shadow-lg shadow-primary/10 active:scale-[0.98] transition-premium">
-                            Set as Planned Outfits
-                        </button>
-                    </div>
-                </section>
 
-                {/* Declutter Assistant */}
-                <section className="bg-aura-accent/5 border-2 border-dashed border-aura-accent/30 p-8 rounded-[3rem] flex flex-col gap-6 group cursor-pointer transition-premium hover:bg-aura-accent/10">
-                    <div className="flex items-center gap-6">
-                        <div className="w-24 h-24 bg-white dark:bg-aura-clay/50 rounded-2xl p-2 shadow-sm flex-shrink-0 transition-premium group-hover:rotate-6">
-                            <img src="https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=100&h=100&fit=crop" className="w-full h-full object-cover rounded-xl" alt="Blouse" />
-                        </div>
-                        <div className="flex-1 space-y-1">
-                            <p className="text-[10px] font-bold text-aura-accent uppercase tracking-widest">Declutter Assistant</p>
-                            <h3 className="font-bold text-lg text-foreground leading-tight">Last worn: Oct 2025</h3>
-                            <p className="text-xs text-slate-500 leading-relaxed italic">"Sell on Vinted to earn ~$45"</p>
-                        </div>
-                    </div>
-                    <button className="w-full bg-aura-accent text-white px-6 py-3.5 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-premium shadow-lg shadow-aura-accent/20">
-                        <Tag size={12} /> Start Vinted Prompt
-                    </button>
-                </section>
-
-                {/* Archive / Closet */}
-                <section className="space-y-4 pb-12">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Digital Archive</h2>
-                        <div className="flex gap-2">
-                            <button className="p-3 bg-white dark:bg-aura-clay/50 rounded-2xl shadow-sm border border-aura-sand/20 text-primary transition-colors"><Filter size={18} /></button>
-                            <button className="p-3 bg-white dark:bg-aura-clay/50 rounded-2xl shadow-sm border border-aura-sand/20 text-primary transition-colors"><Grid size={18} /></button>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6">
-                        {closetItems.map((item, idx) => (
-                            <div key={idx} className="glass p-3 rounded-[2.5rem] space-y-4 group cursor-pointer transition-premium hover:translate-y-[-4px] active:scale-95 border border-white/50">
-                                <div className="aspect-[3/4] bg-aura-sand/10 dark:bg-aura-clay/50 rounded-[2rem] overflow-hidden relative border border-aura-sand/10">
-                                    <img className="w-full h-full object-cover transition-premium group-hover:scale-110" src={item.image} alt={item.name} />
-                                    <div className="absolute top-3 right-3 bg-white/90 dark:bg-aura-clay/90 backdrop-blur px-3 py-1 rounded-full text-[9px] font-bold text-primary shadow-sm">
-                                        {item.worn} Worn
+                    {/* Outfits Horizontal Scroll */}
+                    <div className="flex overflow-x-auto gap-4 pb-4 px-6 snap-x hide-scrollbar">
+                        {outfits.map((outfit) => (
+                            <div key={outfit.id} className="min-w-[280px] snap-center bg-white dark:bg-aura-clay/50 rounded-[2.5rem] overflow-hidden shadow-sm border border-aura-sand/20 flex flex-col group transition-premium">
+                                <div className="h-48 relative overflow-hidden">
+                                    <img src={outfit.mockImage} alt={outfit.title} className="w-full h-full object-cover transition-premium overflow-hidden group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex flex-col justify-end p-5">
+                                        <h3 className="text-white font-bold text-xl leading-tight tracking-tight">{outfit.title}</h3>
+                                        <p className="text-white/80 text-xs mt-1 font-medium italic">{outfit.description}</p>
                                     </div>
-                                    <button className="absolute bottom-3 left-3 p-2 bg-white/80 backdrop-blur rounded-full text-slate-400 hover:text-red-500 transition-colors shadow-sm">
-                                        <Heart size={16} fill={item.liked ? "var(--aura-accent)" : "none"} className={item.liked ? "text-aura-accent" : ""} />
-                                    </button>
                                 </div>
-                                <div className="px-2 pb-2">
-                                    <h3 className="font-bold text-foreground truncate tracking-tight">{item.name}</h3>
-                                    <div className="flex justify-between items-center mt-1">
-                                        <p className="text-[9px] text-primary font-bold uppercase tracking-widest">{item.category}</p>
-                                        <span className="text-[9px] font-bold text-slate-300 italic">Last worn {item.last}</span>
-                                    </div>
+                                <div className="p-4 flex gap-3 overflow-x-auto hide-scrollbar bg-aura-sand/5">
+                                    {outfit.items.map(item => (
+                                        <div key={item.id} className="relative w-14 h-14 rounded-xl overflow-hidden shadow-sm flex-shrink-0 border border-aura-sand/30 bg-white">
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))}
                     </div>
                 </section>
 
+                {/* Mirror Scan & Save */}
+                <section className="px-6 space-y-4">
+                    <div className="flex justify-between items-end">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">The Aura Mirror</h2>
+                        <div className="flex items-center gap-1 text-[9px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full uppercase tracking-widest">
+                            <Sparkles size={10} /> Vision Scan
+                        </div>
+                    </div>
+
+                    <div className="glass rounded-[3rem] overflow-hidden aspect-[4/5] relative border border-white shadow-xl shadow-slate-200/50 dark:shadow-none group transition-premium">
+                        {/* Mock Camera View */}
+                        <div className="absolute inset-0 bg-aura-clay/90 flex flex-col items-center justify-center">
+                            <Camera size={64} className={`transition-premium text-primary ${isScanning ? 'animate-pulse scale-110 shadow-[0_0_40px_var(--primary)] rounded-full' : 'opacity-50 group-hover:opacity-80'}`} />
+                            <p className={`text-sm font-bold tracking-tight mt-6 transition-opacity ${isScanning ? 'opacity-100 text-primary' : 'text-aura-sand opacity-50 group-hover:opacity-80'}`}>
+                                {isScanning ? "Scanning Outfit..." : "Take a Selfie"}
+                            </p>
+                        </div>
+
+                        {/* Scanning Overlay */}
+                        {isScanning && (
+                            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                                <div className="absolute top-0 left-0 w-full h-2 bg-primary/60 shadow-[0_0_30px_var(--primary)] animate-scan" style={{ animationDuration: '2s' }} />
+                                <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-transparent to-primary/10" />
+                            </div>
+                        )}
+
+                        {!scannedItems && !isScanning && (
+                            <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-full px-10">
+                                <button onClick={handleScan} className="w-full bg-primary text-white py-4 px-4 rounded-[1.5rem] font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/20 active:scale-95 transition-premium group-hover:translate-y-[-4px]">
+                                    <Scan size={20} /> Capture What I'm Wearing
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Scan Results Overlay inside the mirror */}
+                        {scannedItems && (
+                            <div className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-6 flex flex-col animate-in slide-in-from-bottom-8 duration-500 z-10">
+                                <div className="flex items-center justify-between mb-6 mt-4">
+                                    <h3 className="font-bold text-xl text-foreground flex items-center gap-2">
+                                        <CheckCircle2 className="text-green-500" /> Outfit Detected
+                                    </h3>
+                                    <button onClick={() => setScannedItems(null)} className="text-slate-400 text-sm font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">Discard</button>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+                                    {scannedItems.map(item => (
+                                        <div key={item.id} className="flex flex-row items-center gap-4 bg-aura-sand/20 dark:bg-white/5 p-3 rounded-2xl border border-aura-sand/30">
+                                            <img src={item.image} alt={item.name} className="w-16 h-16 rounded-xl object-cover shadow-sm bg-white" />
+                                            <div>
+                                                <p className="font-bold text-foreground text-sm leading-tight">{item.name}</p>
+                                                <p className="text-[10px] uppercase tracking-widest text-slate-500 mt-1">{item.category}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-4 pb-4">
+                                    <button onClick={handleSaveWorn} className="w-full bg-foreground dark:bg-primary text-white py-4.5 rounded-[1.5rem] font-bold flex items-center justify-center gap-2 shadow-xl active:scale-[0.98] transition-premium">
+                                        <CheckCircle2 size={20} /> Save to Worn History
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </section>
+
+                {/* Declutter & Alternatives */}
+                {unwornAlternatives.length > 0 && (
+                    <section className="px-6 space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+                                <AlertCircle size={14} /> Forgotten Alternatives
+                            </h2>
+                        </div>
+                        <div className="bg-aura-accent/5 border border-aura-accent/20 rounded-[2.5rem] p-6 space-y-6">
+                            <p className="text-sm text-foreground leading-relaxed italic pr-4">"You haven't worn these items in over a month. Consider rotating them into your outfits, or listing them on Vinted!"</p>
+
+                            <div className="flex gap-4 overflow-x-auto hide-scrollbar -mx-2 px-2 pb-2">
+                                {unwornAlternatives.slice(0, 4).map(item => (
+                                    <div key={item.id} className="min-w-[100px] flex flex-col gap-2 relative group">
+                                        <div className="w-[100px] h-[100px] rounded-2xl overflow-hidden shadow-sm border border-aura-sand/20 bg-white">
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-premium group-hover:scale-110" />
+                                        </div>
+                                        <p className="text-[10px] font-bold text-center truncate px-1 text-slate-600 dark:text-slate-300">{item.name}</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <button className="w-full bg-aura-accent text-white px-6 py-4 rounded-2xl text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 active:scale-95 transition-premium shadow-lg shadow-aura-accent/20">
+                                <Tag size={14} /> Start Vinted Prompt
+                            </button>
+                        </div>
+                    </section>
+                )}
+
+                {/* Digital Archive */}
+                <section className="px-6 space-y-4 pb-8">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Digital Archive</h2>
+                        <div className="flex gap-2">
+                            <button className="p-2.5 bg-white dark:bg-aura-clay/50 rounded-xl shadow-sm border border-aura-sand/20 text-primary transition-colors"><Filter size={16} /></button>
+                            <button className="p-2.5 bg-white dark:bg-aura-clay/50 rounded-xl shadow-sm border border-aura-sand/20 text-primary transition-colors"><Grid size={16} /></button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        {inventory.map((item) => {
+                            // Calculate days since worn gently
+                            let daysAgoText = "Never";
+                            if (item.lastWorn) {
+                                const diffDays = Math.floor((Date.now() - new Date(item.lastWorn).getTime()) / (1000 * 60 * 60 * 24));
+                                if (diffDays === 0) daysAgoText = "Today";
+                                else if (diffDays === 1) daysAgoText = "Yesterday";
+                                else daysAgoText = `${diffDays}d ago`;
+                            }
+
+                            return (
+                                <div key={item.id} className="glass p-2.5 rounded-[2rem] space-y-3 group cursor-pointer transition-premium hover:translate-y-[-4px] active:scale-95 border border-white/50 shadow-sm hover:shadow-md bg-white/40 dark:bg-aura-clay/20">
+                                    <div className="aspect-[4/5] bg-aura-sand/10 dark:bg-aura-clay/50 rounded-[1.5rem] overflow-hidden relative border border-aura-sand/10">
+                                        <img className="w-full h-full object-cover transition-premium group-hover:scale-110" src={item.image} alt={item.name} />
+
+                                        <div className="absolute top-2 right-2 bg-white/95 dark:bg-aura-clay/95 backdrop-blur px-2.5 py-1 rounded-full text-[9px] font-bold text-primary shadow-sm border border-aura-sand/20">
+                                            {item.wornCount} Worn
+                                        </div>
+
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); toggleLike(item.id); }}
+                                            className={`absolute bottom-2 left-2 p-2 backdrop-blur rounded-full transition-colors shadow-sm border border-aura-sand/20 ${item.liked ? 'bg-white text-aura-accent' : 'bg-white/80 text-slate-400 hover:text-red-500'}`}
+                                        >
+                                            <Heart size={14} fill={item.liked ? "var(--aura-accent)" : "none"} className={item.liked ? "text-aura-accent" : ""} />
+                                        </button>
+                                    </div>
+                                    <div className="px-1.5 pb-1">
+                                        <h3 className="font-bold text-foreground text-xs truncate tracking-tight">{item.name}</h3>
+                                        <div className="flex justify-between items-center mt-1">
+                                            <p className="text-[8px] text-primary font-bold uppercase tracking-widest">{item.category}</p>
+                                            <span className="text-[9px] font-bold text-slate-400">{daysAgoText}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </section>
+
             </main>
 
             {/* Floating Add Button */}
-            <button className="fixed bottom-28 right-6 w-16 h-16 bg-primary text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center z-50 active:scale-95 transition-premium hover:scale-110">
-                <Plus size={32} />
+            <button className="fixed bottom-24 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-2xl shadow-primary/30 flex items-center justify-center z-50 active:scale-95 transition-premium hover:scale-110">
+                <Plus size={28} />
             </button>
-
         </div>
     );
 }
