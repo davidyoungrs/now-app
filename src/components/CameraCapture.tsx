@@ -63,6 +63,13 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // Run only once
 
+    const stopCamera = () => {
+        if (stream) {
+            stream.getTracks().forEach((track) => track.stop());
+            setStream(null);
+        }
+    };
+
     const takePhoto = () => {
         if (!videoRef.current || !canvasRef.current) return;
 
@@ -78,6 +85,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             // Get base64 smaller jpeg
             const imageDataUrl = canvas.toDataURL("image/jpeg", 0.7);
             setCapturedImage(imageDataUrl);
+            stopCamera(); // Turn off camera immediately
         }
     };
 
@@ -89,6 +97,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
     const retakePhoto = () => {
         setCapturedImage(null);
+        startCamera(); // Turn camera back on
     };
 
     return (
