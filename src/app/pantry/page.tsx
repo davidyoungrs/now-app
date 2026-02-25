@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2, ChevronRight, Check, X, Package, ShoppingCart, Calendar, Tag, Trash2 } from "lucide-react";
+import { Search, User, PiggyBank, AlertTriangle, MoreVertical, Plus, ScanLine, Edit2, ChevronRight, Check, X, Package, ShoppingCart, Calendar, Tag, Trash2, Leaf, Wind, Snowflake, Droplets } from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import {
     initialPantryItems,
@@ -11,7 +11,8 @@ import {
     CONSUMPTION_STATS,
     getProactiveSuggestions,
     getKitchenSinkRecipe,
-    getExpiringSoonItems
+    getExpiringSoonItems,
+    getStorageTips
 } from "@/lib/pantry";
 
 const UsageHeatmap = () => {
@@ -64,6 +65,7 @@ export default function Pantry() {
     const [showManualEntry, setShowManualEntry] = useState(false);
     const [restockSuggestion, setRestockSuggestion] = useState<PantryItem | null>(null);
     const [proactiveSugg, setProactiveSugg] = useState<string[]>([]);
+    const [storageTips, setStorageTips] = useState<any[]>([]);
 
     // Form State
     const [newItem, setNewItem] = useState({
@@ -76,6 +78,10 @@ export default function Pantry() {
     useEffect(() => {
         setProactiveSugg(getProactiveSuggestions());
     }, []);
+
+    useEffect(() => {
+        setStorageTips(getStorageTips(items));
+    }, [items]);
 
     const kitchenSinkRecipe = useMemo(() => {
         const expiring = getExpiringSoonItems(items);
@@ -467,6 +473,42 @@ export default function Pantry() {
                                         )}
                                     </div>
                                 </section>
+
+                                {/* Storage Science Section */}
+                                {storageTips.length > 0 && (
+                                    <section className="space-y-4">
+                                        <div className="flex items-center justify-between">
+                                            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Storage Science</h2>
+                                            <span className="text-[8px] font-bold text-aura-sage-dark uppercase">Aura Tips</span>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {storageTips.map((tip, i) => {
+                                                const Icon = ({
+                                                    Leaf,
+                                                    Wind,
+                                                    Snowflake,
+                                                    Droplets,
+                                                    AlertTriangle
+                                                } as any)[tip.icon] || Leaf;
+                                                return (
+                                                    <div key={i} className="bg-white dark:bg-aura-clay/40 border border-aura-sand/10 rounded-[2rem] p-5 flex gap-4 shadow-sm group transition-premium hover:shadow-md">
+                                                        <div className="bg-aura-sand/10 text-primary p-3 rounded-2xl h-fit transition-premium group-hover:scale-110">
+                                                            <Icon size={18} />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400 mb-1">
+                                                                {tip.keywords.join(' & ')}
+                                                            </p>
+                                                            <p className="text-xs font-medium text-slate-600 dark:text-slate-300 leading-relaxed">
+                                                                {tip.tip}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                )}
 
                                 <UsageHeatmap />
                             </div>

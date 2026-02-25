@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer } from "lucide-react";
+import { Calendar, AlertCircle, Shirt, ChevronRight, Leaf, Droplets, Sun, Cloud, CloudRain, MapPin, Loader2, Wind, Thermometer, Snowflake } from "lucide-react";
 import { fetchWeather, reverseGeocode, WeatherData } from "@/lib/weather";
-import { initialPantryItems, getExpiringSoonItems, getKitchenSinkRecipe, getProactiveSuggestions } from "@/lib/pantry";
+import { initialPantryItems, getExpiringSoonItems, getKitchenSinkRecipe, getProactiveSuggestions, getStorageTips } from "@/lib/pantry";
 
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -173,10 +173,13 @@ export default function Home() {
   const [expiringItems, setExpiringItems] = useState(getExpiringSoonItems(initialPantryItems));
   const [kitchenSink, setKitchenSink] = useState<any>(null);
   const [proactiveRestock, setProactiveRestock] = useState<string[]>([]);
+  const [storageTip, setStorageTip] = useState<any>(null);
 
   useEffect(() => {
     setKitchenSink(getKitchenSinkRecipe(expiringItems));
     setProactiveRestock(getProactiveSuggestions());
+    const tips = getStorageTips(initialPantryItems);
+    if (tips.length > 0) setStorageTip(tips[0]);
   }, [expiringItems]);
 
   return (
@@ -410,6 +413,22 @@ export default function Home() {
                       + {item}
                     </span>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {storageTip && (
+              <div className="bg-aura-sand/15 border border-aura-sand/30 rounded-[2rem] p-5 flex items-start gap-4">
+                <div className="bg-white dark:bg-aura-clay/50 text-primary p-3 rounded-xl shadow-sm border border-aura-sand/20">
+                  {storageTip.icon === 'Leaf' ? <Leaf size={20} /> :
+                    storageTip.icon === 'Wind' ? <Wind size={20} /> :
+                      storageTip.icon === 'Snowflake' ? <Snowflake size={20} /> :
+                        storageTip.icon === 'Droplets' ? <Droplets size={20} /> :
+                          <AlertCircle size={20} />}
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-widest text-slate-400">Storage Science</p>
+                  <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-tight mt-1">{storageTip.tip}</p>
                 </div>
               </div>
             )}

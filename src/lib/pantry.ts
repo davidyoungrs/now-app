@@ -49,6 +49,22 @@ export const initialPantryItems: PantryItem[] = [
         qty: "12 units",
         image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=100&h=100&fit=crop",
         category: "Fridge"
+    },
+    {
+        id: "7",
+        name: "Yellow Onions",
+        expiryDate: new Date(Date.now() + 864000000).toISOString().split('T')[0], // 10 days
+        qty: "1 kg",
+        image: "https://images.unsplash.com/photo-1508747703725-719777637510?w=100&h=100&fit=crop",
+        category: "Pantry"
+    },
+    {
+        id: "8",
+        name: "Russet Potatoes",
+        expiryDate: new Date(Date.now() + 1296000000).toISOString().split('T')[0], // 15 days
+        qty: "2 kg",
+        image: "https://images.unsplash.com/photo-1518977676601-b53f02ac6d31?w=100&h=100&fit=crop",
+        category: "Pantry"
     }
 ];
 
@@ -101,6 +117,36 @@ export const RECIPE_COMBINATIONS = [
     }
 ];
 
+// Storage Best Practices
+export const STORAGE_TIPS = [
+    {
+        keywords: ["avocado"],
+        tip: "Move to the fridge once ripe to gain another 2-3 days of shelf life.",
+        icon: "Leaf"
+    },
+    {
+        keywords: ["spinach", "lettuce", "greens"],
+        tip: "Wrap in a damp paper towel to maintain crispness and absorb excess moisture.",
+        icon: "Wind"
+    },
+    {
+        keywords: ["bread"],
+        tip: "Freeze slices you won't use within 3 days to keep them fresh for weeks.",
+        icon: "Snowflake"
+    },
+    {
+        keywords: ["onions", "potatoes"],
+        tip: "Store separately. Onions release gases that make potatoes sprout faster.",
+        icon: "AlertTriangle",
+        neighborCheck: ["onions", "potatoes"]
+    },
+    {
+        keywords: ["berries", "strawberry", "blueberry"],
+        tip: "Wash in a vinegar-water solution only just before eating to prevent mold.",
+        icon: "Droplets"
+    }
+];
+
 export const getExpiringSoonItems = (items: PantryItem[]) => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 2); // Within 48 hours
@@ -141,6 +187,24 @@ export const getExpiryLabel = (date: string) => {
     if (diffDays === 1) return { label: "Expires Tomorrow", urgency: "soon" as const };
     if (diffDays < 0) return { label: "Expired", urgency: "overdue" as const };
     return { label: `Expires in ${diffDays} days`, urgency: diffDays <= 3 ? "soon" : "normal" as const };
+};
+
+export const getStorageTips = (items: PantryItem[]) => {
+    const activeNames = items.filter(i => !i.consumed).map(i => i.name.toLowerCase());
+
+    return STORAGE_TIPS.filter(tip => {
+        // If it's a neighbor check, both must exist
+        if (tip.neighborCheck) {
+            return tip.neighborCheck.every(req =>
+                activeNames.some(name => name.includes(req.toLowerCase()))
+            );
+        }
+
+        // Otherwise, any keyword match works
+        return tip.keywords.some(keyword =>
+            activeNames.some(name => name.includes(keyword.toLowerCase()))
+        );
+    });
 };
 
 export const calculateBestDeals = (shoppingList: ShoppingItem[]) => {
