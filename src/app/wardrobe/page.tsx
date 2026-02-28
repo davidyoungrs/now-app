@@ -13,7 +13,7 @@ import { fetchWeather, WeatherData } from "@/lib/weather";
 import { CameraCapture } from "@/components/CameraCapture";
 
 export default function Wardrobe() {
-    const [inventory, setInventory] = useState<WardrobeItem[]>(initialWardrobeItems);
+    const [inventory, setInventory] = useState<WardrobeItem[]>([]);
     const [weather, setWeather] = useState<WeatherData | null>(null);
     const [outfits, setOutfits] = useState<OutfitSuggestion[]>([]);
 
@@ -30,14 +30,32 @@ export default function Wardrobe() {
 
     // Initial Load & Weather
     useEffect(() => {
-        // Fetch weather (mocking coordinates for NY or relying on existing)
+        const loadWardrobe = async () => {
+            try {
+                const res = await fetch("/api/wardrobe");
+                const data = await res.json();
+                if (data.items) {
+                    setInventory(data.items);
+                }
+            } catch (error) {
+                console.error("Failed to load wardrobe:", error);
+            }
+        };
+        loadWardrobe();
+
+        // Fetch weather
         fetchWeather(40.7128, -74.0060).then(data => {
             setWeather(data);
-            setOutfits(generateOutfits(initialWardrobeItems, data.temp));
         }).catch(() => {
-            setOutfits(generateOutfits(initialWardrobeItems, 15));
+            console.error("Failed to fetch weather");
         });
     }, []);
+
+    useEffect(() => {
+        if (inventory.length > 0) {
+            setOutfits(generateOutfits(inventory, weather?.forecast ?? []));
+        }
+    }, [inventory, weather]);
 
     // Calculate Analytics
     const itemsWornLastWeek = getItemsWornLastWeek(inventory);
@@ -71,14 +89,50 @@ export default function Wardrobe() {
         }
     };
 
-    const handleSaveWorn = () => {
+    const handleSaveWorn = async () => {
         if (!scannedItems) return;
-        setInventory(prev => markAsWorn(scannedItems, prev));
+
+        try {
+            const updatedItems: WardrobeItem[] = [];
+            for (const item of scannedItems) {
+                const res = await fetch("/api/wardrobe", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id: item.id, wornCount: item.wornCount + 1, lastWorn: new Date().toISOString() })
+                });
+                const data = await res.json();
+                if (data.item) updatedItems.push(data.item);
+            }
+
+            setInventory(prev => prev.map(item => {
+                const updated = updatedItems.find(u => u.id === item.id);
+                return updated ? updated : item;
+            }));
+        } catch (error) {
+            console.error("Failed to update worn status", error);
+        }
+
         setScannedItems(null);
     };
 
-    const toggleLike = (id: string) => {
-        setInventory(prev => prev.map(item => item.id === id ? { ...item, liked: !item.liked } : item));
+    const toggleLike = async (id: string) => {
+        const item = inventory.find(i => i.id === id);
+        if (!item) return;
+
+        // Optimistic UI update
+        setInventory(prev => prev.map(i => i.id === id ? { ...i, liked: !i.liked } : i));
+
+        try {
+            await fetch("/api/wardrobe", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id, liked: !item.liked })
+            });
+        } catch (error) {
+            console.error("Failed to update like status", error);
+            // Revert on failure
+            setInventory(prev => prev.map(i => i.id === id ? { ...i, liked: item.liked } : i));
+        }
     };
 
     // Handlers: Live Adding Clothes
@@ -120,11 +174,10 @@ export default function Wardrobe() {
         setManualOverrideItems(newItems);
     };
 
-    const handleConfirmAdd = () => {
+    const handleConfirmAdd = async () => {
         if (!manualOverrideItems || !analyzingImage) return;
 
-        const newItems: WardrobeItem[] = manualOverrideItems.map((item, i) => ({
-            id: `new- ${Date.now()} -${i} `,
+        const newItemsToSave = manualOverrideItems.map((item, i) => ({
             name: item.name || "Unnamed Item",
             category: (item.category as Category) || "Accessories",
             image: analyzingImage,
@@ -135,7 +188,23 @@ export default function Wardrobe() {
             liked: false
         }));
 
-        setInventory(prev => [...newItems, ...prev]);
+        try {
+            const addedItems: WardrobeItem[] = [];
+            for (const item of newItemsToSave) {
+                const res = await fetch("/api/wardrobe", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(item),
+                });
+                const data = await res.json();
+                if (data.item) addedItems.push(data.item);
+            }
+
+            setInventory(prev => [...addedItems, ...prev]);
+        } catch (error) {
+            console.error("Failed to save new items:", error);
+        }
+
         setManualOverrideItems(null);
         setAnalyzingImage(null);
     };
@@ -176,9 +245,9 @@ export default function Wardrobe() {
                 {/* Aura Stylist Details */}
                 <section className="space-y-4">
                     <div className="flex justify-between items-center px-6">
-                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">Today's Outfit Options</h2>
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400">3-Day Outfit Planner</h2>
                         <button
-                            onClick={() => setOutfits(generateOutfits(inventory, weather?.temp ?? 15))}
+                            onClick={() => setOutfits(generateOutfits(inventory, weather?.forecast ?? []))}
                             className="flex items-center gap-1.5 text-xs font-bold text-primary transition-premium hover:opacity-70 bg-primary/10 px-3 py-1.5 rounded-full"
                         >
                             <RefreshCcw size={12} /> Re-plan
@@ -242,14 +311,20 @@ export default function Wardrobe() {
                             </div>
                         )}
 
-                        {/* Scan Results Overlay inside the mirror */}
                         {scannedItems && (
                             <div className="absolute inset-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md p-6 flex flex-col animate-in slide-in-from-bottom-8 duration-500 z-10">
-                                <div className="flex items-center justify-between mb-6 mt-4">
-                                    <h3 className="font-bold text-xl text-foreground flex items-center gap-2">
+                                {/* Clueless / Barbie Retro Timestamp Overlay */}
+                                <div className="absolute top-4 left-6 text-[#ff00ff] font-mono text-sm tracking-widest uppercase drop-shadow-[0_0_2px_rgba(255,0,255,0.8)] opacity-80 z-20" style={{ textShadow: "1px 1px 0 #fff, -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff" }}>
+                                    ► PLAY<br />
+                                    {new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' })}<br />
+                                    {new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                </div>
+
+                                <div className="flex items-center justify-between mb-6 mt-16 relative z-30">
+                                    <h3 className="font-bold text-xl text-foreground flex items-center gap-2 drop-shadow-sm">
                                         <CheckCircle2 className="text-green-500" /> Outfit Detected
                                     </h3>
-                                    <button onClick={() => setScannedItems(null)} className="text-slate-400 text-sm font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">Discard</button>
+                                    <button onClick={() => setScannedItems(null)} className="text-slate-400 text-sm font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 transition-colors">Discard</button>
                                 </div>
 
                                 <div className="flex-1 overflow-y-auto space-y-4 pr-2">

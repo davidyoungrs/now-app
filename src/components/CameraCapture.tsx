@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Camera, X, RefreshCcw, CheckCircle2 } from "lucide-react";
+import { Camera, X, RefreshCcw, CheckCircle2, SwitchCamera } from "lucide-react";
 
 interface CameraCaptureProps {
     onCapture: (base64Image: string) => void;
@@ -16,8 +16,9 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     const [error, setError] = useState<string | null>(null);
     const [isInitializing, setIsInitializing] = useState(true);
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
+    const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-    const startCamera = useCallback(async () => {
+    const startCamera = useCallback(async (mode: "environment" | "user") => {
         setIsInitializing(true);
         setError(null);
         try {
@@ -26,7 +27,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             }
 
             const newStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "environment" }, // Prefer back camera on mobile
+                video: { facingMode: mode },
                 audio: false,
             });
 
@@ -36,7 +37,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             }
         } catch (err: any) {
             console.error("Failed to access camera:", err);
-            // Fallback to any camera if environment facing fails
+            // Fallback to any camera if the requested facingMode fails
             try {
                 const fallbackStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 setStream(fallbackStream);
@@ -52,7 +53,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
     }, [stream]);
 
     useEffect(() => {
-        startCamera();
+        startCamera(facingMode);
 
         // Cleanup on unmount
         return () => {
@@ -61,7 +62,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
             }
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Run only once
+    }, [facingMode]); // Rerun if facingMode changes
 
     const stopCamera = () => {
         if (stream) {
@@ -81,6 +82,11 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
         const context = canvas.getContext("2d");
         if (context) {
+            // Check if we are using the user camera to mirror the snapshot
+            if (facingMode === "user") {
+                context.translate(canvas.width, 0);
+                context.scale(-1, 1);
+            }
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             // Get base64 smaller jpeg
             const imageDataUrl = canvas.toDataURL("image/jpeg", 0.7);
@@ -97,12 +103,21 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
 
     const retakePhoto = () => {
         setCapturedImage(null);
-        startCamera(); // Turn camera back on
+        startCamera(facingMode); // Turn camera back on
+    };
+
+    const toggleCamera = () => {
+        setFacingMode(prev => prev === "environment" ? "user" : "environment");
     };
 
     return (
         <div className="fixed inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-300">
-            <div className="absolute top-6 right-6 z-10">
+            <div className="absolute top-6 right-6 z-10 flex gap-4">
+                {!capturedImage && (
+                    <button onClick={toggleCamera} className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white backdrop-blur transition-colors">
+                        <SwitchCamera size={24} />
+                    </button>
+                )}
                 <button onClick={onClose} className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white backdrop-blur transition-colors">
                     <X size={24} />
                 </button>
@@ -127,7 +142,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
                             ref={videoRef}
                             autoPlay
                             playsInline
-                            className={`w-full h-full object-cover ${error ? "hidden" : ""}`}
+                            className={`w-full h-full object-cover ${error ? "hidden" : ""} ${facingMode === "user" ? "scale-x-[-1]" : ""}`}
                         />
 
                         {/* Camera Guides */}

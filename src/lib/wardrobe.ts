@@ -127,14 +127,14 @@ export function getUnwornAlternatives(items: WardrobeItem[]): WardrobeItem[] {
 
 // --- Generator & Actions ---
 
+import { DailyForecast } from "./weather";
+
 /**
  * Generates exactly 3 outfit options based on simplistic weather logic 
  * and randomly pulls from inventory to keep it interesting.
+ * Now uses a multi-day forecast to generate one outfit per day.
  */
-export function generateOutfits(inventory: WardrobeItem[], temperature: number): OutfitSuggestion[] {
-    // Simple logic: if < 15C, prioritize medium/heavy.
-    const isCold = temperature < 15;
-
+export function generateOutfits(inventory: WardrobeItem[], forecast: DailyForecast[]): OutfitSuggestion[] {
     const tops = inventory.filter(i => i.category === "Tops");
     const bottoms = inventory.filter(i => i.category === "Bottoms");
     const shoes = inventory.filter(i => i.category === "Shoes");
@@ -142,36 +142,53 @@ export function generateOutfits(inventory: WardrobeItem[], temperature: number):
 
     const getRandom = (arr: WardrobeItem[]) => arr[Math.floor(Math.random() * arr.length)];
 
-    // We'll hardcode 3 specific "vibes" for the suggestions to ensure variety.
-    const vibes = [
-        {
-            id: "o1", title: "Smart Casual Form", description: "Perfect for office and after-hours.",
-            mockImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&h=800&fit=crop"
-        },
-        {
-            id: "o2", title: "Relaxed City", description: "Comfortable, stylish, ready for anything.",
-            mockImage: "https://images.unsplash.com/photo-1434389678369-bd410f538431?w=600&h=800&fit=crop"
-        },
-        {
-            id: "o3", title: "Creative Edge", description: "Stand out with a bit of contrast.",
-            mockImage: "https://images.unsplash.com/photo-1495385794356-15371f348c31?w=600&h=800&fit=crop"
-        }
+    // Fallback if forecast is missing
+    const defaultForecast: DailyForecast[] = [
+        { date: "Today", tempMax: 15, weatherCode: 0, condition: "Sunny" },
+        { date: "Tomorrow", tempMax: 12, weatherCode: 3, condition: "Cloudy" },
+        { date: "Day 3", tempMax: 10, weatherCode: 61, condition: "Rain" }
     ];
 
-    return vibes.map(vibe => {
+    const activeForecast = (forecast && forecast.length >= 3) ? forecast.slice(0, 3) : defaultForecast;
+
+    const vibes = [
+        { id: "o1", mockImage: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&h=800&fit=crop" },
+        { id: "o2", mockImage: "https://images.unsplash.com/photo-1434389678369-bd410f538431?w=600&h=800&fit=crop" },
+        { id: "o3", mockImage: "https://images.unsplash.com/photo-1495385794356-15371f348c31?w=600&h=800&fit=crop" }
+    ];
+
+    return activeForecast.map((day, index) => {
+        // Simple logic: if < 15C, prioritize medium/heavy.
+        const isCold = day.tempMax < 15;
+        const isRaining = day.condition.toLowerCase().includes("rain");
+
         // Basic assembly
         const outfit: WardrobeItem[] = [];
         if (tops.length) outfit.push(getRandom(tops));
         if (bottoms.length) outfit.push(getRandom(bottoms));
         if (shoes.length) outfit.push(getRandom(shoes));
 
-        // Add outerwear if cold or randomly 50%
-        if ((isCold || Math.random() > 0.5) && outerwear.length) {
+        // Add outerwear if cold or raining or randomly 30%
+        if ((isCold || isRaining || Math.random() > 0.7) && outerwear.length) {
             outfit.push(getRandom(outerwear));
         }
 
+        // Format date string nicely
+        let dateLabel = day.date;
+        try {
+            if (day.date !== "Today" && day.date !== "Tomorrow" && day.date !== "Day 3") {
+                const d = new Date(day.date);
+                dateLabel = d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+            }
+        } catch (e) { }
+
+        const vibeInfo = vibes[index] || vibes[0];
+
         return {
-            ...vibe,
+            id: vibeInfo.id,
+            title: dateLabel,
+            description: `${day.tempMax}°C, ${day.condition}`,
+            mockImage: vibeInfo.mockImage,
             items: outfit
         };
     });

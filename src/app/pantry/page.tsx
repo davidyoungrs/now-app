@@ -97,7 +97,7 @@ const HealthBalance = ({ items }: { items: PantryItem[] }) => {
 
 export default function Pantry() {
     const [activeTab, setActiveTab] = useState("Pantry");
-    const [items, setItems] = useState<PantryItem[]>(initialPantryItems);
+    const [items, setItems] = useState<PantryItem[]>([]);
     const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([]);
     const [showScan, setShowScan] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
@@ -117,6 +117,18 @@ export default function Pantry() {
     const [nutritionalAlert, setNutritionalAlert] = useState<any>(null);
 
     useEffect(() => {
+        const loadPantry = async () => {
+            try {
+                const res = await fetch("/api/pantry");
+                const data = await res.json();
+                if (data.items) {
+                    setItems(data.items);
+                }
+            } catch (error) {
+                console.error("Failed to load pantry:", error);
+            }
+        };
+        loadPantry();
         setProactiveSugg(getProactiveSuggestions());
     }, []);
 
@@ -131,15 +143,25 @@ export default function Pantry() {
         return getKitchenSinkRecipe(expiring);
     }, [items]);
 
-    const handleConsume = (item: PantryItem) => {
+    const handleConsume = async (item: PantryItem) => {
         setItems(prev => prev.map(i =>
             i.id === item.id ? { ...i, consumed: true } : i
         ));
         setRestockSuggestion(item);
         setTimeout(() => setRestockSuggestion(null), 10000);
+
+        try {
+            await fetch("/api/pantry", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: item.id, consumed: true })
+            });
+        } catch (error) {
+            console.error("Failed to mark as consumed:", error);
+        }
     };
 
-    const handleReduce = (item: PantryItem) => {
+    const handleReduce = async (item: PantryItem) => {
         const update = reduceItemQuantity(item);
         setItems(prev => prev.map(i =>
             i.id === item.id ? { ...i, ...update } : i
@@ -149,19 +171,43 @@ export default function Pantry() {
             setRestockSuggestion(item);
             setTimeout(() => setRestockSuggestion(null), 10000);
         }
+
+        try {
+            await fetch("/api/pantry", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id: item.id, ...update })
+            });
+        } catch (error) {
+            console.error("Failed to reduce item:", error);
+        }
     };
 
-    const handleAddManual = () => {
+    const handleAddManual = async () => {
         if (!newItem.name) return;
-        const item: PantryItem = {
-            id: Math.random().toString(),
+        const itemToCreate = {
             name: newItem.name,
             qty: newItem.qty,
             expiryDate: newItem.expiryDate,
-            category: newItem.category as any,
-            image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=100&h=100&fit=crop"
+            category: newItem.category,
+            image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=100&h=100&fit=crop",
+            consumed: false
         };
-        setItems(prev => [item, ...prev]);
+
+        try {
+            const res = await fetch("/api/pantry", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(itemToCreate)
+            });
+            const data = await res.json();
+            if (data.item) {
+                setItems(prev => [data.item, ...prev]);
+            }
+        } catch (error) {
+            console.error("Failed to add manual item:", error);
+        }
+
         setShowManualEntry(false);
         setNewItem({ name: "", qty: "", expiryDate: new Date().toISOString().split('T')[0], category: "Pantry" });
     };
@@ -182,18 +228,31 @@ export default function Pantry() {
     const handleScan = () => {
         setIsScanning(true);
         setShowScan(true);
-        setTimeout(() => {
+        setTimeout(async () => {
             setIsScanning(false);
             // Simulate adding a scanned item
-            const item: PantryItem = {
-                id: Math.random().toString(),
+            const itemToCreate = {
                 name: "Organic Spinach",
                 expiryDate: new Date(Date.now() + 86400000).toISOString().split('T')[0],
                 qty: "1 bag",
                 image: "https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=100&h=100&fit=crop",
-                category: "Fridge"
+                category: "Fridge",
+                consumed: false
             };
-            setItems(prev => [item, ...prev]);
+
+            try {
+                const res = await fetch("/api/pantry", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(itemToCreate)
+                });
+                const data = await res.json();
+                if (data.item) {
+                    setItems(prev => [data.item, ...prev]);
+                }
+            } catch (error) {
+                console.error("Failed to save scanned item:", error);
+            }
         }, 3000);
     };
 

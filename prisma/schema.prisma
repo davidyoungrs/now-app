@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model WardrobeItem {
+  id          String    @id @default(uuid())
+  name        String
+  category    String
+  image       String // Base64 or Blob URL
+  color       String
+  warmthLevel String
+  formality   String
+  wornCount   Int       @default(0)
+  liked       Boolean   @default(false)
+  lastWorn    DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model PantryItem {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  qty         String
+  expiryDate  String
+  image       String   @default("")
+  consumed    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
